@@ -9,9 +9,11 @@ import {
   Calculator,
   CreditCard,
   LogOut,
+  User,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
+  { to: '/app/perfil', label: 'Mi Perfil', icon: User },
   { to: '/app/turnos', label: 'Turnos Disponibles', icon: CalendarDays },
   { to: '/app/rutinas', label: 'Mis Rutinas', icon: ListChecks },
   { to: '/app/avisos', label: 'Avisos', icon: Megaphone },
@@ -20,6 +22,7 @@ const NAV_ITEMS = [
 ];
 
 const TITLES = {
+  '/app/perfil': 'Mi Perfil',
   '/app/turnos': 'Turnos Disponibles',
   '/app/rutinas': 'Mis Rutinas',
   '/app/avisos': 'Avisos',
