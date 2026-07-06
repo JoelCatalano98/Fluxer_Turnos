@@ -1,0 +1,31 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginSocio from './pages/LoginSocio';
+import LayoutSocio from './layouts/LayoutSocio';
+
+// Páginas temporales (placeholder)
+function Turnos()      { return <h2 className="text-xl font-bold text-gray-800">Turnos Disponibles</h2>; }
+function Rutinas()     { return <h2 className="text-xl font-bold text-gray-800">Mis Rutinas</h2>; }
+function Avisos()      { return <h2 className="text-xl font-bold text-gray-800">Avisos</h2>; }
+function Calculadora() { return <h2 className="text-xl font-bold text-gray-800">Calculadora de %</h2>; }
+function Pagos()       { return <h2 className="text-xl font-bold text-gray-800">Informar Pago</h2>; }
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Login */}
+        <Route path="/" element={<LoginSocio />} />
+
+        {/* App protegida */}
+        <Route path="/app" element={<LayoutSocio />}>
+          <Route index element={<Navigate to="turnos" replace />} />
+          <Route path="turnos" element={<Turnos />} />
+          <Route path="rutinas" element={<Rutinas />} />
+          <Route path="avisos" element={<Avisos />} />
+          <Route path="calculadora" element={<Calculadora />} />
+          <Route path="pagos" element={<Pagos />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
