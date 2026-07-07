@@ -3,9 +3,9 @@ import LoginSocio from './pages/LoginSocio';
 import LayoutSocio from './layouts/LayoutSocio';
 import PerfilSocio from './pages/PerfilSocio';
 import TurnosSocio from './pages/TurnosSocio';
+import RutinasSocio from './pages/RutinasSocio';
 
 // Páginas temporales (placeholder)
-function Rutinas()     { return <h2 className="text-xl font-bold text-gray-800">Mis Rutinas</h2>; }
 function Avisos()      { return <h2 className="text-xl font-bold text-gray-800">Avisos</h2>; }
 function Calculadora() { return <h2 className="text-xl font-bold text-gray-800">Calculadora de %</h2>; }
 function Pagos()       { return <h2 className="text-xl font-bold text-gray-800">Informar Pago</h2>; }
@@ -22,7 +22,7 @@ export default function App() {
           <Route index element={<Navigate to="turnos" replace />} />
           <Route path="perfil" element={<PerfilSocio />} />
           <Route path="turnos" element={<TurnosSocio />} />
-          <Route path="rutinas" element={<Rutinas />} />
+          <Route path="rutinas" element={<RutinasSocio />} />
           <Route path="avisos" element={<Avisos />} />
           <Route path="calculadora" element={<Calculadora />} />
           <Route path="pagos" element={<Pagos />} />
