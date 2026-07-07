@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import clienteAxios from '../api/axios';
 import { Save, Check, Loader2, Dumbbell } from 'lucide-react';
-
-const API_URL = 'http://localhost:5000/api/socio/rutinas';
 
 export default function RutinasSocio() {
   const [rutinas, setRutinas] = useState([]);
@@ -35,7 +33,7 @@ export default function RutinasSocio() {
     }
 
     try {
-      const res = await axios.get(`${API_URL}/${clienteId}`);
+      const res = await clienteAxios.get(`/socio/rutinas/${clienteId}`);
       if (res.data.success) {
         setRutinas(res.data.data);
         
@@ -67,7 +65,7 @@ export default function RutinasSocio() {
     setSuccessId(null);
 
     try {
-      const res = await axios.put(`${API_URL}/ejercicio/${ejercicioId}`, {
+      const res = await clienteAxios.put(`/socio/rutinas/ejercicio/${ejercicioId}`, {
         pesoReal: String(peso)
       });
 

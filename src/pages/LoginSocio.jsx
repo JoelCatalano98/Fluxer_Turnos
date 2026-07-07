@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import clienteAxios from '../api/axios';
 import { Mail, Lock, LogIn, UserPlus, Zap, User, CreditCard, ArrowRightLeft } from 'lucide-react';
-
-const API_URL = 'http://localhost:5000/api/socio/auth';
 
 export default function LoginSocio() {
   const navigate = useNavigate();
@@ -38,7 +36,7 @@ export default function LoginSocio() {
     try {
       if (isLogin) {
         // ── Login ──
-        const res = await axios.post(`${API_URL}/login`, { email, password });
+        const res = await clienteAxios.post(`/socio/auth/login`, { email, password });
         // Guardar token y datos del usuario en localStorage
         localStorage.setItem('socio_token', res.data.data.token);
         localStorage.setItem('socio_data', JSON.stringify(res.data.data.cliente));
@@ -46,7 +44,7 @@ export default function LoginSocio() {
         navigate('/app');
       } else {
         // ── Registro ──
-        await axios.post(`${API_URL}/register`, {
+        await clienteAxios.post(`/socio/auth/register`, {
           nombre,
           apellido,
           dni_cuit: dniCuit,

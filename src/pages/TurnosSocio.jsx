@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import clienteAxios from '../api/axios';
 import { Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-
-const API_URL = 'http://localhost:5000/api/socio/turnos';
 
 // Helper: Lunes de la semana actual
 const getLunes = () => {
@@ -68,7 +66,7 @@ export default function TurnosSocio() {
     setLoading(true);
     try {
       // Filtrar por día seleccionado
-      const res = await axios.get(`${API_URL}/disponibles?dia_semana=${diaSeleccionado}`);
+      const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaSeleccionado}`);
       if (res.data.success) {
         setClases(res.data.data);
       }
@@ -95,7 +93,7 @@ export default function TurnosSocio() {
     try {
       const diaObj = semana.find(d => d.diaSemana === diaSeleccionado);
       
-      const res = await axios.post(`${API_URL}/reservar`, {
+      const res = await clienteAxios.post(`/socio/turnos/reservar`, {
         horarioId: horario.id,
         clienteId: clienteId,
         fechaExacta: diaObj.fechaStr
@@ -117,7 +115,7 @@ export default function TurnosSocio() {
   const handleCancelar = async (turnoId, horarioId) => {
     setReserving(horarioId);
     try {
-      const res = await axios.delete(`${API_URL}/cancelar/${turnoId}`);
+      const res = await clienteAxios.delete(`/socio/turnos/cancelar/${turnoId}`);
       if (res.data.success) {
         setAlertMsg({ type: 'success', text: 'Reserva cancelada con éxito' });
         fetchClases();

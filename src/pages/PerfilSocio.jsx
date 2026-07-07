@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import clienteAxios from '../api/axios';
 import { User, Mail, CreditCard, Phone, Save, Lock, ShieldCheck, Loader2 } from 'lucide-react';
-
-const API_URL = 'http://localhost:5000/api/socio/perfil';
 
 export default function PerfilSocio() {
   // Datos del perfil
@@ -47,7 +45,7 @@ export default function PerfilSocio() {
         return;
       }
       try {
-        const res = await axios.get(`${API_URL}/${id}`);
+        const res = await clienteAxios.get(`/socio/perfil/${id}`);
         if (res.data.success) {
           const d = res.data.data;
           setPerfil({
@@ -74,7 +72,7 @@ export default function PerfilSocio() {
     setSavingPerfil(true);
     const id = getSocioId();
     try {
-      const res = await axios.put(`${API_URL}/${id}`, perfil);
+      const res = await clienteAxios.put(`/socio/perfil/${id}`, perfil);
       if (res.data.success) {
         // Actualizar datos en localStorage
         const storedData = JSON.parse(localStorage.getItem('socio_data') || '{}');
@@ -96,7 +94,7 @@ export default function PerfilSocio() {
     setSavingPassword(true);
     const id = getSocioId();
     try {
-      const res = await axios.put(`${API_URL}/${id}/password`, passwords);
+      const res = await clienteAxios.put(`/socio/perfil/${id}/password`, passwords);
       if (res.data.success) {
         setMsgPassword({ text: '¡Contraseña actualizada con éxito!', type: 'success' });
         setPasswords({ passwordActual: '', nuevoPassword: '' });
