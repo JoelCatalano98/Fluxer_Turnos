@@ -17,7 +17,6 @@ const NAV_ITEMS = [
   { to: '/app/turnos', label: 'Turnos Disponibles', icon: CalendarDays },
   { to: '/app/rutinas', label: 'Mis Rutinas', icon: ListChecks },
   { to: '/app/avisos', label: 'Avisos', icon: Megaphone },
-  { to: '/app/calculadora', label: 'Calculadora de %', icon: Calculator },
   { to: '/app/pagos', label: 'Informar Pago', icon: CreditCard },
 ];
 
@@ -26,7 +25,6 @@ const TITLES = {
   '/app/turnos': 'Turnos Disponibles',
   '/app/rutinas': 'Mis Rutinas',
   '/app/avisos': 'Avisos',
-  '/app/calculadora': 'Calculadora',
   '/app/pagos': 'Informar Pago',
 };
 
