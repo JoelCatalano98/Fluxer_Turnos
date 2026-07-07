@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import clienteAxios from '../api/axios';
-import { Save, Check, Loader2, Dumbbell } from 'lucide-react';
+import { Save, Check, Loader2, Dumbbell, Calculator } from 'lucide-react';
+import CalculadoraPesos from '../components/CalculadoraPesos';
 
 export default function RutinasSocio() {
   const [rutinas, setRutinas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [successId, setSuccessId] = useState(null);
+  const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
 
   // Estado local para los inputs de peso real
   const [pesosInput, setPesosInput] = useState({});
@@ -188,6 +190,17 @@ export default function RutinasSocio() {
           ))}
         </div>
       )}
+
+      {/* Botón flotante para la Calculadora */}
+      <button
+        onClick={() => setMostrarCalculadora(true)}
+        className="fixed bottom-6 right-6 z-[9999] bg-gray-900 text-white p-4 rounded-full shadow-lg hover:bg-black active:scale-95 transition-all"
+      >
+        <Calculator size={24} />
+      </button>
+
+      {/* Modal de la Calculadora */}
+      {mostrarCalculadora && <CalculadoraPesos onClose={() => setMostrarCalculadora(false)} />}
     </div>
   );
 }
