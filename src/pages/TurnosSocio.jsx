@@ -27,6 +27,7 @@ export default function TurnosSocio() {
   const [loading, setLoading] = useState(true);
   const [reserving, setReserving] = useState(null);
   const [alertMsg, setAlertMsg] = useState(null);
+  const [modalAnotados, setModalAnotados] = useState({ isOpen: false, turnos: [], titulo: '' });
   
   // Día seleccionado (1=Lunes ... 6=Sábado). Por defecto hoy, o lunes si es domingo.
   const [diaSeleccionado, setDiaSeleccionado] = useState(() => {
@@ -113,6 +114,23 @@ export default function TurnosSocio() {
     }
   };
 
+  const handleCancelar = async (turnoId, horarioId) => {
+    setReserving(horarioId);
+    try {
+      const res = await axios.delete(`${API_URL}/cancelar/${turnoId}`);
+      if (res.data.success) {
+        setAlertMsg({ type: 'success', text: 'Reserva cancelada con éxito' });
+        fetchClases();
+      }
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Error al cancelar el turno.';
+      setAlertMsg({ type: 'error', text: msg });
+    } finally {
+      setReserving(null);
+      setTimeout(() => setAlertMsg(null), 3000);
+    }
+  };
+
   const socioId = getSocioId();
   const diaActivoObj = semana.find(d => d.diaSemana === diaSeleccionado);
 
@@ -187,85 +205,83 @@ export default function TurnosSocio() {
             const catColor = horario.categoria?.color || '#10b981';
 
             return (
-              <div key={horario.id} className="bg-[#1c1c1e] border border-white/5 rounded-3xl p-5 shadow-xl relative overflow-hidden flex flex-col">
+              <div key={horario.id} className="bg-[#121212] border border-gray-800 rounded-xl p-3 shadow-sm relative overflow-hidden flex flex-col">
                 
                 {/* Acento de color sutil de fondo */}
                 <div 
-                  className="absolute top-0 right-0 w-32 h-32 opacity-[0.03] rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" 
+                  className="absolute top-0 right-0 w-24 h-24 opacity-[0.03] rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" 
                   style={{ backgroundColor: catColor }}
                 ></div>
 
-                <div className="flex justify-between items-center mb-5 z-10">
-                  {/* Hora grande a la izquierda */}
+                <div className="flex justify-between items-center mb-3 z-10">
+                  {/* Rango Horario */}
                   <div className="flex flex-col">
-                    <span className="text-3xl font-black text-white tracking-tighter leading-none">
-                      {formatTime(horario.hora_inicio)}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-500 mt-1">
-                      hasta {formatTime(horario.hora_fin)} hs
+                    <span className="text-xl font-bold text-gray-100 tracking-tight leading-none">
+                      {formatTime(horario.hora_inicio)} a {formatTime(horario.hora_fin)} hs
                     </span>
                   </div>
 
-                  {/* Nombre de la Categoría y Cupos */}
+                  {/* Etiqueta de la Categoría */}
                   <div className="text-right flex flex-col items-end">
                     <span 
-                      className="text-xs font-bold uppercase tracking-widest mb-1 px-2 py-0.5 rounded-md"
-                      style={{ color: catColor, backgroundColor: `${catColor}15` }}
+                      className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border"
+                      style={{ color: catColor, backgroundColor: `${catColor}15`, borderColor: `${catColor}30` }}
                     >
                       {catNombre}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-400">
-                      {ocupados} / {cupoMaximo}
                     </span>
                   </div>
                 </div>
 
+                <div className="flex justify-between items-center mb-2 z-10">
+                  <span className="text-[11px] text-gray-400">Cupos: <strong className="text-gray-200">{ocupados}/{cupoMaximo}</strong></span>
+                  <button 
+                    onClick={() => setModalAnotados({ isOpen: true, turnos: turnosHoy, titulo: catNombre + ' ' + formatTime(horario.hora_inicio) })}
+                    className="text-[11px] text-gray-400 hover:text-white underline decoration-gray-700 underline-offset-2 transition-colors cursor-pointer"
+                  >
+                    Ver anotados ({ocupados})
+                  </button>
+                </div>
+
                 {/* Progress bar */}
-                <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mb-5 z-10">
+                <div className="w-full h-[3px] bg-gray-800 rounded-full overflow-hidden mb-3 z-10">
                   <div 
                     className="h-full rounded-full transition-all duration-500 ease-out"
                     style={{ 
                       width: `${porcentaje}%`, 
-                      backgroundColor: estaLlena ? '#ef4444' : catColor 
+                      backgroundColor: estaLlena ? '#ef4444' : '#d1d5db' 
                     }}
                   ></div>
                 </div>
 
-                {/* Lista de Anotados */}
-                <div className="z-10 mb-5 bg-black/20 rounded-xl p-3 border border-white/5">
-                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Anotados</h4>
-                  {turnosHoy.length > 0 ? (
-                    <div className="text-sm text-gray-300 leading-relaxed">
-                      {turnosHoy.map(t => {
-                        const nombre = t.cliente?.nombre || 'Socio';
-                        const apellido = t.cliente?.apellido || '';
-                        return `${nombre} ${apellido ? apellido.charAt(0) + '.' : ''}`;
-                      }).join(', ')}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500 italic">Sé el primero en anotarte</div>
-                  )}
-                </div>
-
                 {/* Botón de Acción */}
-                <div className="z-10">
+                <div className="z-10 mt-auto">
                   {estoyAnotado ? (
-                    <div className="w-full py-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl font-bold text-center text-sm flex items-center justify-center gap-2">
-                      <CheckCircle className="w-5 h-5" />
-                      Anotado
-                    </div>
+                    <button
+                      onClick={() => handleCancelar(turnosHoy.find(t => t.clienteId === socioId).id, horario.id)}
+                      disabled={isReservingThis}
+                      className="w-full py-2 bg-[#1a1a1a] hover:bg-red-900/20 border border-[#2a2a2a] hover:border-red-500/30 text-gray-400 hover:text-red-400 rounded-lg font-semibold text-center text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-70"
+                    >
+                      {isReservingThis ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+                      ) : (
+                        <>
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Cancelar Reserva
+                        </>
+                      )}
+                    </button>
                   ) : estaLlena ? (
-                    <button disabled className="w-full py-3.5 bg-gray-800 text-gray-500 rounded-2xl font-bold text-sm cursor-not-allowed uppercase tracking-wider">
-                      Lista de Espera
+                    <button disabled className="w-full py-2 bg-[#161616] border border-[#222] text-gray-600 rounded-lg font-semibold text-xs cursor-not-allowed uppercase tracking-wider">
+                      Lleno
                     </button>
                   ) : (
                     <button
                       onClick={() => handleReservar(horario)}
                       disabled={isReservingThis}
-                      className="w-full py-3.5 bg-gray-100 hover:bg-white text-gray-900 rounded-2xl font-bold text-sm uppercase tracking-wider shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
+                      className="w-full py-2 bg-gray-200 hover:bg-white text-gray-950 rounded-lg font-bold text-xs uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-70 disabled:active:scale-100"
                     >
                       {isReservingThis ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-gray-600" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-900" />
                       ) : (
                         'Anotarme'
                       )}
@@ -277,6 +293,52 @@ export default function TurnosSocio() {
           })
         )}
       </div>
+
+      {/* Modal Ver Anotados */}
+      {modalAnotados.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#121212] border border-gray-800 rounded-xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#1a1a1a]">
+              <h3 className="text-gray-100 font-bold text-sm">Anotados - {modalAnotados.titulo}</h3>
+              <button 
+                onClick={() => setModalAnotados({ isOpen: false, turnos: [], titulo: '' })}
+                className="text-gray-500 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto">
+              {modalAnotados.turnos.length > 0 ? (
+                <ul className="space-y-3">
+                  {modalAnotados.turnos.map((t, idx) => {
+                    const nombre = t.cliente?.nombre || 'Socio';
+                    const apellido = t.cliente?.apellido || '';
+                    return (
+                      <li key={idx} className="flex items-center gap-3 text-sm text-gray-300">
+                        <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-[10px] text-gray-400 font-bold border border-gray-700">
+                          {idx + 1}
+                        </div>
+                        {nombre} {apellido}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-gray-500 text-sm text-center py-4">No hay inscritos en esta clase aún.</p>
+              )}
+            </div>
+            <div className="p-3 border-t border-gray-800 bg-[#161616]">
+              <button 
+                onClick={() => setModalAnotados({ isOpen: false, turnos: [], titulo: '' })}
+                className="w-full py-2 bg-gray-800 text-gray-300 rounded font-semibold text-xs hover:bg-gray-700"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
