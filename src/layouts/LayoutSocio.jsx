@@ -10,6 +10,7 @@ import {
   CreditCard,
   LogOut,
   User,
+  Trophy,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/app/turnos', label: 'Turnos Disponibles', icon: CalendarDays },
   { to: '/app/rutinas', label: 'Mis Rutinas', icon: ListChecks },
   { to: '/app/avisos', label: 'Avisos', icon: Megaphone },
+  { to: '/app/ranking', label: 'Ranking 1RM', icon: Trophy },
   { to: '/app/pagos', label: 'Informar Pago', icon: CreditCard },
 ];
 
@@ -25,6 +27,7 @@ const TITLES = {
   '/app/turnos': 'Turnos Disponibles',
   '/app/rutinas': 'Mis Rutinas',
   '/app/avisos': 'Avisos',
+  '/app/ranking': 'Ranking 1RM',
   '/app/pagos': 'Informar Pago',
 };
 
