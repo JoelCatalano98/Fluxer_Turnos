@@ -112,7 +112,7 @@ export default function PerfilSocio() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-gray-900 animate-spin" />
       </div>
     );
   }
@@ -121,10 +121,10 @@ export default function PerfilSocio() {
     <div className="max-w-lg mx-auto space-y-6 pb-8">
       {/* ── Sección 1: Mis Datos ── */}
       <form onSubmit={handleSavePerfil}>
-        <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 shadow-md">
-              <User className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 border border-gray-200">
+              <User className="w-5 h-5 text-gray-900" />
             </div>
             <h2 className="text-lg font-bold text-gray-800">Mis Datos</h2>
           </div>
@@ -133,7 +133,7 @@ export default function PerfilSocio() {
           {msgPerfil.text && (
             <div className={`mb-4 p-3 rounded-xl text-sm text-center ${
               msgPerfil.type === 'success'
-                ? 'bg-emerald-50 border border-emerald-200 text-emerald-600'
+                ? 'bg-gray-100 border border-gray-200 text-gray-900'
                 : 'bg-red-50 border border-red-200 text-red-500'
             }`}>
               {msgPerfil.text}
@@ -150,7 +150,7 @@ export default function PerfilSocio() {
                   type="text"
                   value={perfil.nombre}
                   onChange={(e) => setPerfil({ ...perfil, nombre: e.target.value })}
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all text-sm"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all text-sm"
                   placeholder="Tu nombre"
                 />
               </div>
@@ -165,7 +165,7 @@ export default function PerfilSocio() {
                   type="text"
                   value={perfil.apellido}
                   onChange={(e) => setPerfil({ ...perfil, apellido: e.target.value })}
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all text-sm"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all text-sm"
                   placeholder="Tu apellido"
                 />
               </div>
@@ -180,7 +180,7 @@ export default function PerfilSocio() {
                   type="text"
                   value={perfil.dni_cuit}
                   onChange={(e) => setPerfil({ ...perfil, dni_cuit: e.target.value })}
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all text-sm"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all text-sm"
                   placeholder="Ej: 12345678"
                 />
               </div>
@@ -195,7 +195,7 @@ export default function PerfilSocio() {
                   type="email"
                   value={perfil.email}
                   onChange={(e) => setPerfil({ ...perfil, email: e.target.value })}
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all text-sm"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all text-sm"
                   placeholder="tu@email.com"
                 />
               </div>
@@ -210,7 +210,7 @@ export default function PerfilSocio() {
                   type="tel"
                   value={perfil.telefono}
                   onChange={(e) => setPerfil({ ...perfil, telefono: e.target.value })}
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all text-sm"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all text-sm"
                   placeholder="+54 9 ..."
                 />
               </div>
@@ -220,7 +220,7 @@ export default function PerfilSocio() {
           <button
             type="submit"
             disabled={savingPerfil}
-            className="w-full flex items-center justify-center gap-2 mt-5 p-3 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+            className="w-full flex items-center justify-center gap-2 mt-5 p-3 bg-gray-900 hover:bg-black text-white font-semibold rounded-xl shadow-sm transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-sm"
           >
             {savingPerfil ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -236,10 +236,10 @@ export default function PerfilSocio() {
 
       {/* ── Sección 2: Seguridad ── */}
       <form onSubmit={handleChangePassword}>
-        <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-5">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
-              <ShieldCheck className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 border border-gray-200">
+              <ShieldCheck className="w-5 h-5 text-gray-900" />
             </div>
             <h2 className="text-lg font-bold text-gray-800">Seguridad</h2>
           </div>
@@ -248,7 +248,7 @@ export default function PerfilSocio() {
           {msgPassword.text && (
             <div className={`mb-4 p-3 rounded-xl text-sm text-center ${
               msgPassword.type === 'success'
-                ? 'bg-emerald-50 border border-emerald-200 text-emerald-600'
+                ? 'bg-gray-100 border border-gray-200 text-gray-900'
                 : 'bg-red-50 border border-red-200 text-red-500'
             }`}>
               {msgPassword.text}
@@ -265,7 +265,7 @@ export default function PerfilSocio() {
                   type="password"
                   value={passwords.passwordActual}
                   onChange={(e) => setPasswords({ ...passwords, passwordActual: e.target.value })}
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all text-sm"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all text-sm"
                   placeholder="••••••••"
                   required
                 />
@@ -281,7 +281,7 @@ export default function PerfilSocio() {
                   type="password"
                   value={passwords.nuevoPassword}
                   onChange={(e) => setPasswords({ ...passwords, nuevoPassword: e.target.value })}
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all text-sm"
+                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all text-sm"
                   placeholder="••••••••"
                   required
                 />
@@ -292,7 +292,7 @@ export default function PerfilSocio() {
           <button
             type="submit"
             disabled={savingPassword}
-            className="w-full flex items-center justify-center gap-2 mt-5 p-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+            className="w-full flex items-center justify-center gap-2 mt-5 p-3 bg-gray-900 hover:bg-black text-white font-semibold rounded-xl shadow-sm transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-sm"
           >
             {savingPassword ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

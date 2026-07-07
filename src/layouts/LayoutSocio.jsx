@@ -55,12 +55,12 @@ export default function LayoutSocio() {
       </div>
 
       {/* ── Navbar ── */}
-      <header className="sticky top-0 z-50 bg-gray-900 text-white">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 text-gray-900">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-lg font-bold truncate">{currentTitle}</h1>
           <button
             onClick={() => setIsOpen(true)}
-            className="p-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-900"
             aria-label="Abrir menú"
           >
             <Menu className="w-6 h-6" />
@@ -78,16 +78,16 @@ export default function LayoutSocio() {
 
       {/* ── Drawer ── */}
       <aside
-        className={`fixed top-0 right-0 z-[70] h-full w-3/4 max-w-xs bg-gray-900 text-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-[70] h-full w-3/4 max-w-xs bg-white text-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Drawer header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <span className="text-lg font-bold tracking-wide">Menú</span>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Cerrar menú"
           >
             <X className="w-5 h-5" />
@@ -104,8 +104,8 @@ export default function LayoutSocio() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-5 py-3.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-emerald-500/10 text-emerald-400 border-r-2 border-emerald-400'
-                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-gray-100 text-gray-900 border-r-4 border-gray-900'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`
               }
             >
@@ -116,10 +116,10 @@ export default function LayoutSocio() {
         </nav>
 
         {/* Logout */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
           >
             <LogOut className="w-5 h-5" />
             Cerrar Sesión

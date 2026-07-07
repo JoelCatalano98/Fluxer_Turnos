@@ -135,21 +135,21 @@ export default function TurnosSocio() {
   const diaActivoObj = semana.find(d => d.diaSemana === diaSeleccionado);
 
   return (
-    <div className="max-w-md mx-auto relative pb-20 min-h-screen bg-gray-950">
+    <div className="max-w-md mx-auto relative pb-20 min-h-screen bg-gray-50">
       
       {/* Alerta flotante */}
       {alertMsg && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-3 rounded-xl shadow-2xl backdrop-blur-md border ${
-          alertMsg.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'bg-red-500/20 border-red-500/50 text-red-400'
-        } flex items-center gap-2 max-w-[90%] w-max animate-in fade-in slide-in-from-top-5`}>
+        <div className={`fixed bottom-10 left-4 right-4 z-[10000] p-4 rounded-xl shadow-2xl text-center font-bold ${
+          alertMsg.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
+        } flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-5`}>
           {alertMsg.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <span className="font-semibold text-sm">{alertMsg.text}</span>
+          <span>{alertMsg.text}</span>
         </div>
       )}
 
       {/* Header & Calendario Carrusel */}
-      <div className="bg-gray-900 border-b border-white/5 px-4 pt-6 pb-4 sticky top-0 z-30 shadow-lg">
-        <h2 className="text-xl font-bold text-white mb-4 tracking-wide">Clases Disponibles</h2>
+      <div className="bg-white border-b border-gray-200 px-4 pt-6 pb-4 sticky top-0 z-30 shadow-sm">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 tracking-wide">Clases Disponibles</h2>
         
         <div className="flex justify-between items-center overflow-x-auto pb-2 scrollbar-hide gap-2">
           {semana.map(dia => {
@@ -160,14 +160,14 @@ export default function TurnosSocio() {
                 onClick={() => setDiaSeleccionado(dia.diaSemana)}
                 className={`flex flex-col items-center justify-center min-w-[50px] h-16 rounded-2xl transition-all duration-300 ${
                   isSelected 
-                    ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30' 
-                    : 'bg-white/5 hover:bg-white/10'
+                    ? 'bg-gray-900 shadow-md shadow-gray-900/20' 
+                    : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
-                <span className={`text-xs font-semibold uppercase mb-1 ${isSelected ? 'text-emerald-50' : 'text-gray-400'}`}>
+                <span className={`text-xs font-semibold uppercase mb-1 ${isSelected ? 'text-gray-300' : 'text-gray-500'}`}>
                   {dia.nombre}
                 </span>
-                <span className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-gray-200'}`}>
+                <span className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                   {dia.num}
                 </span>
               </button>
@@ -177,16 +177,16 @@ export default function TurnosSocio() {
       </div>
 
       {/* Lista de Horarios */}
-      <div className="px-4 py-6 space-y-4">
+      <div className="grid grid-cols-2 gap-3 p-3">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-            <p className="mt-3 text-emerald-400/80 font-medium text-sm">Cargando horarios...</p>
+          <div className="col-span-2 flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-gray-900 animate-spin" />
+            <p className="mt-3 text-gray-600 font-medium text-sm">Cargando horarios...</p>
           </div>
         ) : clases.length === 0 ? (
-          <div className="bg-white/5 border border-white/5 rounded-3xl p-10 text-center flex flex-col items-center">
-            <Clock className="w-12 h-12 text-gray-600 mb-3" />
-            <h3 className="text-gray-300 font-medium mb-1">Sin actividades</h3>
+          <div className="col-span-2 bg-white border border-gray-200 rounded-3xl p-10 text-center flex flex-col items-center shadow-sm mt-4">
+            <Clock className="w-12 h-12 text-gray-400 mb-3" />
+            <h3 className="text-gray-900 font-bold mb-1">Sin actividades</h3>
             <p className="text-gray-500 text-sm">No hay clases programadas para este día.</p>
           </div>
         ) : (
@@ -205,83 +205,59 @@ export default function TurnosSocio() {
             const catColor = horario.categoria?.color || '#10b981';
 
             return (
-              <div key={horario.id} className="bg-[#121212] border border-gray-800 rounded-xl p-3 shadow-sm relative overflow-hidden flex flex-col">
+              <div key={horario.id} className="flex flex-col h-full justify-between bg-white rounded-xl border border-gray-200 shadow-sm p-3 relative overflow-hidden">
                 
-                {/* Acento de color sutil de fondo */}
-                <div 
-                  className="absolute top-0 right-0 w-24 h-24 opacity-[0.03] rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" 
-                  style={{ backgroundColor: catColor }}
-                ></div>
-
-                <div className="flex justify-between items-center mb-3 z-10">
+                <div className="z-10 flex flex-col">
                   {/* Rango Horario */}
-                  <div className="flex flex-col">
-                    <span className="text-xl font-bold text-gray-100 tracking-tight leading-none">
-                      {formatTime(horario.hora_inicio)} a {formatTime(horario.hora_fin)} hs
-                    </span>
-                  </div>
-
+                  <span className="text-xl font-black text-gray-900 tracking-tight leading-none">
+                    {formatTime(horario.hora_inicio)}
+                  </span>
+                  
                   {/* Etiqueta de la Categoría */}
-                  <div className="text-right flex flex-col items-end">
-                    <span 
-                      className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border"
-                      style={{ color: catColor, backgroundColor: `${catColor}15`, borderColor: `${catColor}30` }}
-                    >
-                      {catNombre}
-                    </span>
-                  </div>
-                </div>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">
+                    {catNombre}
+                  </span>
 
-                <div className="flex justify-between items-center mb-2 z-10">
-                  <span className="text-[11px] text-gray-400">Cupos: <strong className="text-gray-200">{ocupados}/{cupoMaximo}</strong></span>
+                  {/* Cupos */}
+                  <span className="text-xs text-gray-500 mt-2">
+                    {ocupados}/{cupoMaximo} lugares
+                  </span>
+                  
+                  {/* Ver Anotados */}
                   <button 
                     onClick={() => setModalAnotados({ isOpen: true, turnos: turnosHoy, titulo: catNombre + ' ' + formatTime(horario.hora_inicio) })}
-                    className="text-[11px] text-gray-400 hover:text-white underline decoration-gray-700 underline-offset-2 transition-colors cursor-pointer"
+                    className="text-left text-[11px] text-gray-900 hover:text-black underline underline-offset-2 mt-1 w-max font-semibold"
                   >
                     Ver anotados ({ocupados})
                   </button>
                 </div>
 
-                {/* Progress bar */}
-                <div className="w-full h-[3px] bg-gray-800 rounded-full overflow-hidden mb-3 z-10">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500 ease-out"
-                    style={{ 
-                      width: `${porcentaje}%`, 
-                      backgroundColor: estaLlena ? '#ef4444' : '#d1d5db' 
-                    }}
-                  ></div>
-                </div>
-
                 {/* Botón de Acción */}
-                <div className="z-10 mt-auto">
+                <div className="z-10 mt-3 pt-3 border-t border-gray-100">
                   {estoyAnotado ? (
                     <button
                       onClick={() => handleCancelar(turnosHoy.find(t => t.clienteId === socioId).id, horario.id)}
                       disabled={isReservingThis}
-                      className="w-full py-2 bg-[#1a1a1a] hover:bg-red-900/20 border border-[#2a2a2a] hover:border-red-500/30 text-gray-400 hover:text-red-400 rounded-lg font-semibold text-center text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-70"
+                      className="w-full py-2 rounded-lg text-sm font-semibold border border-gray-300 text-gray-800 bg-white hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors disabled:opacity-70"
                     >
                       {isReservingThis ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <>
-                          <AlertCircle className="w-3.5 h-3.5" />
-                          Cancelar Reserva
-                        </>
+                        <>Cancelar</>
                       )}
                     </button>
                   ) : estaLlena ? (
-                    <button disabled className="w-full py-2 bg-[#161616] border border-[#222] text-gray-600 rounded-lg font-semibold text-xs cursor-not-allowed uppercase tracking-wider">
+                    <button disabled className="w-full py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed">
                       Lleno
                     </button>
                   ) : (
                     <button
                       onClick={() => handleReservar(horario)}
                       disabled={isReservingThis}
-                      className="w-full py-2 bg-gray-200 hover:bg-white text-gray-950 rounded-lg font-bold text-xs uppercase tracking-wider transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-70 disabled:active:scale-100"
+                      className="w-full py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-black transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-70 disabled:active:scale-100"
                     >
                       {isReservingThis ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-900" />
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
                       ) : (
                         'Anotarme'
                       )}
@@ -296,45 +272,34 @@ export default function TurnosSocio() {
 
       {/* Modal Ver Anotados */}
       {modalAnotados.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#121212] border border-gray-800 rounded-xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#1a1a1a]">
-              <h3 className="text-gray-100 font-bold text-sm">Anotados - {modalAnotados.titulo}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-5 w-3/4 max-w-sm shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-gray-900 font-bold text-sm">Anotados - {modalAnotados.titulo}</h3>
               <button 
                 onClick={() => setModalAnotados({ isOpen: false, turnos: [], titulo: '' })}
-                className="text-gray-500 hover:text-white"
+                className="text-gray-400 hover:text-gray-700 font-bold"
               >
                 ✕
               </button>
             </div>
-            
-            <div className="p-4 overflow-y-auto">
+            <div className="overflow-y-auto">
               {modalAnotados.turnos.length > 0 ? (
                 <ul className="space-y-3">
-                  {modalAnotados.turnos.map((t, idx) => {
-                    const nombre = t.cliente?.nombre || 'Socio';
-                    const apellido = t.cliente?.apellido || '';
-                    return (
-                      <li key={idx} className="flex items-center gap-3 text-sm text-gray-300">
-                        <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-[10px] text-gray-400 font-bold border border-gray-700">
-                          {idx + 1}
-                        </div>
-                        {nombre} {apellido}
-                      </li>
-                    );
-                  })}
+                  {modalAnotados.turnos.map((t, idx) => (
+                    <li key={t.id || idx} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs border border-gray-200">
+                        {t.cliente?.nombre?.charAt(0) || 'U'}
+                      </div>
+                      <span className="text-gray-700 text-sm font-medium">
+                        {t.cliente ? `${t.cliente.nombre} ${t.cliente.apellido}` : 'Usuario'}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
               ) : (
-                <p className="text-gray-500 text-sm text-center py-4">No hay inscritos en esta clase aún.</p>
+                <p className="text-gray-500 text-center text-sm py-4">Nadie anotado aún.</p>
               )}
-            </div>
-            <div className="p-3 border-t border-gray-800 bg-[#161616]">
-              <button 
-                onClick={() => setModalAnotados({ isOpen: false, turnos: [], titulo: '' })}
-                className="w-full py-2 bg-gray-800 text-gray-300 rounded font-semibold text-xs hover:bg-gray-700"
-              >
-                Cerrar
-              </button>
             </div>
           </div>
         </div>
