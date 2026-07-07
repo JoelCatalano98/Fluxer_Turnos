@@ -68,7 +68,7 @@ export default function RutinasSocio() {
 
     try {
       const res = await axios.put(`${API_URL}/ejercicio/${ejercicioId}`, {
-        pesoReal: parseFloat(peso)
+        pesoReal: String(peso)
       });
 
       if (res.data.success) {
@@ -76,7 +76,7 @@ export default function RutinasSocio() {
         setRutinas(prev => prev.map(rut => ({
           ...rut,
           ejercicios: rut.ejercicios.map(ej => 
-            ej.id === ejercicioId ? { ...ej, pesoReal: parseFloat(peso) } : ej
+            ej.id === ejercicioId ? { ...ej, pesoReal: String(peso) } : ej
           )
         })));
         
@@ -155,12 +155,10 @@ export default function RutinasSocio() {
                         <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tu Peso (kg)</span>
                         <div className="flex items-center gap-2">
                           <input
-                            type="number"
-                            min="0"
-                            step="0.5"
+                            type="text"
                             value={pesosInput[ejercicio.id] !== undefined ? pesosInput[ejercicio.id] : ''}
                             onChange={(e) => handleInputChange(ejercicio.id, e.target.value)}
-                            placeholder="0"
+                            placeholder="Ej: al fallo"
                             className="w-16 p-1.5 text-center text-sm font-bold text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all shadow-sm"
                           />
                           <button
