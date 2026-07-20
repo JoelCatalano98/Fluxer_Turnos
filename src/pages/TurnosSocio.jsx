@@ -1,6 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import clienteAxios from '../api/axios';
 import { Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+
+// Formatear hora (UTC a HH:MM)
+const formatTime = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
 
 export default function TurnosSocio() {
   const [clases, setClases] = useState([]);
@@ -9,18 +18,27 @@ export default function TurnosSocio() {
   const [alertMsg, setAlertMsg] = useState(null);
   const [modalAnotados, setModalAnotados] = useState({ isOpen: false, turnos: [], titulo: '' });
   
-  const [diasValidos, setDiasValidos] = useState([]);
   const [semana, setSemana] = useState([]);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(null); // YYYY-MM-DD
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
 
-  const getSocioId = () => {
+  const getSocioData = () => {
     try {
       const data = localStorage.getItem('socio_data');
-      return data ? JSON.parse(data).id : null;
+      return data ? JSON.parse(data) : null;
     } catch {
       return null;
     }
   };
+
+  const getSocioId = () => {
+    const data = getSocioData();
+    return data ? data.id : null;
+  };
+
+  const socio = getSocioData();
+  const estaVencido = socio?.vencimientoCuota
+    ? new Date(socio.vencimientoCuota) < new Date()
+    : true;
 
   useEffect(() => {
     const initConfig = async () => {
@@ -29,14 +47,12 @@ export default function TurnosSocio() {
         const configData = res.data.data || {};
         const stringDias = configData.diasApertura || '1,2,3,4,5,6';
         const validos = stringDias.split(',').map(Number);
-        setDiasValidos(validos);
 
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         
         let diaInicio = new Date(hoy);
         let maxIntentos = 0;
-        // Buscar próximo día válido si hoy no lo es
         while (!validos.includes(diaInicio.getDay()) && maxIntentos < 14) {
             diaInicio.setDate(diaInicio.getDate() + 1);
             maxIntentos++;
@@ -46,7 +62,6 @@ export default function TurnosSocio() {
         const dias = [];
         let cur = new Date(diaInicio);
         let intentos = 0;
-        // Generar los próximos 7 días que coincidan con los días de apertura
         while (dias.length < 7 && intentos < 30) {
             if (validos.includes(cur.getDay())) {
                 dias.push({
@@ -67,18 +82,20 @@ export default function TurnosSocio() {
         }
       } catch (err) {
         console.error('Error fetching config:', err);
+      } finally {
+        setLoading(false);
       }
     };
     initConfig();
   }, []);
 
   const fetchClases = async () => {
-    if (!fechaSeleccionada) return;
+    if (!fechaSeleccionada || semana.length === 0) return;
     
     setLoading(true);
     try {
       const diaActivo = semana.find(d => d.fechaStr === fechaSeleccionada);
-      if (!diaActivo) return;
+      if (!diaActivo) { setLoading(false); return; }
       
       const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}`);
       if (res.data.success) {
@@ -93,10 +110,13 @@ export default function TurnosSocio() {
   };
 
   useEffect(() => {
-    fetchClases();
+    if (fechaSeleccionada && semana.length > 0) {
+      fetchClases();
+    }
   }, [fechaSeleccionada, semana]);
 
   const handleReservar = async (horario) => {
+    if (estaVencido) return;
     const clienteId = getSocioId();
     if (!clienteId) {
       setAlertMsg({ type: 'error', text: 'Sesión inválida, vuelve a iniciar sesión.' });
@@ -203,39 +223,37 @@ export default function TurnosSocio() {
           </div>
         ) : (
           clases.map(horario => {
-            // Filtrar turnos del día activo
-            const turnosHoy = horario.turnos?.filter(t => t.fecha.startsWith(diaActivoObj.fechaStr)) || [];
+            const turnosHoy = diaActivoObj
+              ? (horario.turnos?.filter(t => t.fecha.startsWith(diaActivoObj.fechaStr)) || [])
+              : [];
             const ocupados = turnosHoy.length;
             const cupoMaximo = horario.cupoMaximo || 15;
-            const porcentaje = Math.min((ocupados / cupoMaximo) * 100, 100);
             
             const estaLlena = ocupados >= cupoMaximo;
             const isReservingThis = reserving === horario.id;
             const estoyAnotado = turnosHoy.some(t => t.clienteId === socioId);
             
             const catNombre = horario.categoria?.nombre || 'General';
-            const catColor = horario.categoria?.color || '#10b981';
+
+            // Si está vencido Y no está ya anotado, el botón queda deshabilitado
+            const bloqueadoPorDeuda = estaVencido && !estoyAnotado;
 
             return (
               <div key={horario.id} className="flex flex-col h-full justify-between bg-white rounded-xl border border-gray-200 shadow-sm p-3 relative overflow-hidden">
                 
                 <div className="z-10 flex flex-col">
-                  {/* Rango Horario */}
                   <span className="text-xl font-black text-gray-900 tracking-tight leading-none">
                     {formatTime(horario.hora_inicio)}
                   </span>
                   
-                  {/* Etiqueta de la Categoría */}
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mt-1">
                     {catNombre}
                   </span>
 
-                  {/* Cupos */}
                   <span className="text-xs text-gray-500 mt-2">
                     {ocupados}/{cupoMaximo} lugares
                   </span>
                   
-                  {/* Ver Anotados */}
                   <button 
                     onClick={() => setModalAnotados({ isOpen: true, turnos: turnosHoy, titulo: catNombre + ' ' + formatTime(horario.hora_inicio) })}
                     className="text-left text-[11px] text-gray-900 hover:text-black underline underline-offset-2 mt-1 w-max font-semibold"
@@ -265,11 +283,17 @@ export default function TurnosSocio() {
                   ) : (
                     <button
                       onClick={() => handleReservar(horario)}
-                      disabled={isReservingThis}
-                      className="w-full py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white hover:bg-black transition-all active:scale-[0.98] flex items-center justify-center gap-1.5 disabled:opacity-70 disabled:active:scale-100"
+                      disabled={isReservingThis || bloqueadoPorDeuda}
+                      className={`w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                        bloqueadoPorDeuda
+                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                          : 'bg-gray-900 text-white hover:bg-black active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100'
+                      }`}
                     >
                       {isReservingThis ? (
                         <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      ) : bloqueadoPorDeuda ? (
+                        'Anotarme'
                       ) : (
                         'Anotarme'
                       )}

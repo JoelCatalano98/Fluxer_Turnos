@@ -6,9 +6,7 @@ import TurnosSocio from './pages/TurnosSocio';
 import RutinasSocio from './pages/RutinasSocio';
 import AvisosSocio from './pages/AvisosSocio';
 import RankingSocio from './pages/RankingSocio';
-
-// Páginas temporales (placeholder)
-function Pagos()       { return <h2 className="text-xl font-bold text-gray-800">Informar Pago</h2>; }
+import SuscripcionSocio from './pages/SuscripcionSocio';
 
 export default function App() {
   return (
@@ -25,7 +23,7 @@ export default function App() {
           <Route path="rutinas" element={<RutinasSocio />} />
           <Route path="avisos" element={<AvisosSocio />} />
           <Route path="ranking" element={<RankingSocio />} />
-          <Route path="pagos" element={<Pagos />} />
+          <Route path="pagos" element={<SuscripcionSocio />} />
         </Route>
       </Routes>
     </BrowserRouter>
