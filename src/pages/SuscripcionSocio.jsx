@@ -17,7 +17,8 @@ export default function SuscripcionSocio() {
   const socio = getSocioData();
   const socioId = socio?.id || null;
   const vencimiento = socio?.vencimientoCuota ? new Date(socio.vencimientoCuota) : null;
-  const estaVencido = vencimiento ? vencimiento < new Date() : true;
+  const estaVencido = socio?.estado_pago === 'MOROSO'
+    || (vencimiento ? vencimiento < new Date() : true);
 
   const formatFecha = (date) => {
     if (!date) return '—';

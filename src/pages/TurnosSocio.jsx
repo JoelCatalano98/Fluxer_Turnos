@@ -36,9 +36,8 @@ export default function TurnosSocio() {
   };
 
   const socio = getSocioData();
-  const estaVencido = socio?.vencimientoCuota
-    ? new Date(socio.vencimientoCuota) < new Date()
-    : true;
+  const estaVencido = socio?.estado_pago === 'MOROSO'
+    || (socio?.vencimientoCuota ? new Date(socio.vencimientoCuota) < new Date() : true);
 
   useEffect(() => {
     const initConfig = async () => {
@@ -49,31 +48,31 @@ export default function TurnosSocio() {
         const validos = stringDias.split(',').map(Number);
 
         const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        
-        let diaInicio = new Date(hoy);
-        let maxIntentos = 0;
-        while (!validos.includes(diaInicio.getDay()) && maxIntentos < 14) {
-            diaInicio.setDate(diaInicio.getDate() + 1);
-            maxIntentos++;
-        }
+        // Evitar bug de medianoche forzando la hora a medio día local
+        hoy.setHours(12, 0, 0, 0);
 
         const nombres = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const dias = [];
-        let cur = new Date(diaInicio);
+        let fechaIteracion = new Date(hoy);
         let intentos = 0;
+        
+        // Mostrar próximos 7 días hábiles
         while (dias.length < 7 && intentos < 30) {
-            if (validos.includes(cur.getDay())) {
-                dias.push({
-                    num: cur.getDate(),
-                    nombre: nombres[cur.getDay()],
-                    diaSemana: cur.getDay(),
-                    fechaObj: new Date(cur),
-                    fechaStr: cur.toISOString().split('T')[0]
-                });
-            }
-            cur.setDate(cur.getDate() + 1);
-            intentos++;
+          if (validos.includes(fechaIteracion.getDay())) {
+            const y = fechaIteracion.getFullYear();
+            const m = String(fechaIteracion.getMonth() + 1).padStart(2, '0');
+            const dStr = String(fechaIteracion.getDate()).padStart(2, '0');
+            
+            dias.push({
+              num: fechaIteracion.getDate(),
+              nombre: nombres[fechaIteracion.getDay()],
+              diaSemana: fechaIteracion.getDay(),
+              fechaObj: new Date(fechaIteracion),
+              fechaStr: `${y}-${m}-${dStr}`
+            });
+          }
+          fechaIteracion.setDate(fechaIteracion.getDate() + 1);
+          intentos++;
         }
         
         setSemana(dias);
@@ -81,7 +80,35 @@ export default function TurnosSocio() {
           setFechaSeleccionada(dias[0].fechaStr);
         }
       } catch (err) {
-        console.error('Error fetching config:', err);
+        console.error('Error al cargar config:', err);
+        // Fallback: construir la semana con días por defecto (Lun-Sáb)
+        const fallbackDias = [1, 2, 3, 4, 5, 6];
+        const hoy = new Date();
+        hoy.setHours(12, 0, 0, 0);
+        const nombres = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const dias = [];
+        let fechaIteracion = new Date(hoy);
+        let intentos = 0;
+        while (dias.length < 7 && intentos < 30) {
+          if (fallbackDias.includes(fechaIteracion.getDay())) {
+            const y = fechaIteracion.getFullYear();
+            const m = String(fechaIteracion.getMonth() + 1).padStart(2, '0');
+            const dStr = String(fechaIteracion.getDate()).padStart(2, '0');
+            dias.push({
+              num: fechaIteracion.getDate(),
+              nombre: nombres[fechaIteracion.getDay()],
+              diaSemana: fechaIteracion.getDay(),
+              fechaObj: new Date(fechaIteracion),
+              fechaStr: `${y}-${m}-${dStr}`
+            });
+          }
+          fechaIteracion.setDate(fechaIteracion.getDate() + 1);
+          intentos++;
+        }
+        setSemana(dias);
+        if (dias.length > 0) {
+          setFechaSeleccionada(dias[0].fechaStr);
+        }
       } finally {
         setLoading(false);
       }
@@ -90,12 +117,18 @@ export default function TurnosSocio() {
   }, []);
 
   const fetchClases = async () => {
-    if (!fechaSeleccionada || semana.length === 0) return;
+    if (!fechaSeleccionada || semana.length === 0) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {
       const diaActivo = semana.find(d => d.fechaStr === fechaSeleccionada);
-      if (!diaActivo) { setLoading(false); return; }
+      if (!diaActivo) { 
+        setLoading(false); 
+        return; 
+      }
       
       const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}`);
       if (res.data.success) {
