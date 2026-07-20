@@ -2,24 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import clienteAxios from '../api/axios';
 import { Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
-// Helper: Lunes de la semana actual
-const getLunes = () => {
-  const d = new Date();
-  const day = d.getDay();
-  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1));
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-
-// Formatear hora (UTC a HH:MM)
-const formatTime = (dateStr) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  return `${hours}:${minutes}`;
-};
-
 export default function TurnosSocio() {
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,31 +9,9 @@ export default function TurnosSocio() {
   const [alertMsg, setAlertMsg] = useState(null);
   const [modalAnotados, setModalAnotados] = useState({ isOpen: false, turnos: [], titulo: '' });
   
-  // Día seleccionado (1=Lunes ... 6=Sábado). Por defecto hoy, o lunes si es domingo.
-  const [diaSeleccionado, setDiaSeleccionado] = useState(() => {
-    let dia = new Date().getDay();
-    if (dia === 0) dia = 1; // Si es domingo, mostramos lunes
-    return dia;
-  });
-
-  // Generar array de la semana actual
-  const semana = useMemo(() => {
-    const lunes = getLunes();
-    const dias = [];
-    const nombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    for (let i = 0; i < 6; i++) {
-      const d = new Date(lunes);
-      d.setDate(lunes.getDate() + i);
-      dias.push({
-        num: d.getDate(),
-        nombre: nombres[i],
-        diaSemana: i + 1,
-        fechaObj: d, // Objeto fecha para luego reservar
-        fechaStr: d.toISOString().split('T')[0] // YYYY-MM-DD
-      });
-    }
-    return dias;
-  }, []);
+  const [diasValidos, setDiasValidos] = useState([]);
+  const [semana, setSemana] = useState([]);
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(null); // YYYY-MM-DD
 
   const getSocioId = () => {
     try {
@@ -62,11 +22,65 @@ export default function TurnosSocio() {
     }
   };
 
+  useEffect(() => {
+    const initConfig = async () => {
+      try {
+        const res = await clienteAxios.get('/configuracion');
+        const configData = res.data.data || {};
+        const stringDias = configData.diasApertura || '1,2,3,4,5,6';
+        const validos = stringDias.split(',').map(Number);
+        setDiasValidos(validos);
+
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        
+        let diaInicio = new Date(hoy);
+        let maxIntentos = 0;
+        // Buscar próximo día válido si hoy no lo es
+        while (!validos.includes(diaInicio.getDay()) && maxIntentos < 14) {
+            diaInicio.setDate(diaInicio.getDate() + 1);
+            maxIntentos++;
+        }
+
+        const nombres = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const dias = [];
+        let cur = new Date(diaInicio);
+        let intentos = 0;
+        // Generar los próximos 7 días que coincidan con los días de apertura
+        while (dias.length < 7 && intentos < 30) {
+            if (validos.includes(cur.getDay())) {
+                dias.push({
+                    num: cur.getDate(),
+                    nombre: nombres[cur.getDay()],
+                    diaSemana: cur.getDay(),
+                    fechaObj: new Date(cur),
+                    fechaStr: cur.toISOString().split('T')[0]
+                });
+            }
+            cur.setDate(cur.getDate() + 1);
+            intentos++;
+        }
+        
+        setSemana(dias);
+        if (dias.length > 0) {
+          setFechaSeleccionada(dias[0].fechaStr);
+        }
+      } catch (err) {
+        console.error('Error fetching config:', err);
+      }
+    };
+    initConfig();
+  }, []);
+
   const fetchClases = async () => {
+    if (!fechaSeleccionada) return;
+    
     setLoading(true);
     try {
-      // Filtrar por día seleccionado
-      const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaSeleccionado}`);
+      const diaActivo = semana.find(d => d.fechaStr === fechaSeleccionada);
+      if (!diaActivo) return;
+      
+      const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}`);
       if (res.data.success) {
         setClases(res.data.data);
       }
@@ -80,7 +94,7 @@ export default function TurnosSocio() {
 
   useEffect(() => {
     fetchClases();
-  }, [diaSeleccionado]);
+  }, [fechaSeleccionada, semana]);
 
   const handleReservar = async (horario) => {
     const clienteId = getSocioId();
@@ -91,7 +105,7 @@ export default function TurnosSocio() {
 
     setReserving(horario.id);
     try {
-      const diaObj = semana.find(d => d.diaSemana === diaSeleccionado);
+      const diaObj = semana.find(d => d.fechaStr === fechaSeleccionada);
       
       const res = await clienteAxios.post(`/socio/turnos/reservar`, {
         horarioId: horario.id,
@@ -130,7 +144,7 @@ export default function TurnosSocio() {
   };
 
   const socioId = getSocioId();
-  const diaActivoObj = semana.find(d => d.diaSemana === diaSeleccionado);
+  const diaActivoObj = semana.find(d => d.fechaStr === fechaSeleccionada);
 
   return (
     <div className="max-w-md mx-auto relative pb-20 min-h-screen bg-gray-50">
@@ -151,11 +165,11 @@ export default function TurnosSocio() {
         
         <div className="flex justify-between items-center overflow-x-auto pb-2 scrollbar-hide gap-2">
           {semana.map(dia => {
-            const isSelected = dia.diaSemana === diaSeleccionado;
+            const isSelected = dia.fechaStr === fechaSeleccionada;
             return (
               <button
-                key={dia.diaSemana}
-                onClick={() => setDiaSeleccionado(dia.diaSemana)}
+                key={dia.fechaStr}
+                onClick={() => setFechaSeleccionada(dia.fechaStr)}
                 className={`flex flex-col items-center justify-center min-w-[50px] h-16 rounded-2xl transition-all duration-300 ${
                   isSelected 
                     ? 'bg-gray-900 shadow-md shadow-gray-900/20' 
