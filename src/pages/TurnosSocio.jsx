@@ -20,6 +20,14 @@ export default function TurnosSocio() {
   
   const [semana, setSemana] = useState([]);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
+  const [socio, setSocio] = useState(() => {
+    try {
+      const data = localStorage.getItem('socio_data');
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const getSocioData = () => {
     try {
@@ -31,17 +39,24 @@ export default function TurnosSocio() {
   };
 
   const getSocioId = () => {
-    const data = getSocioData();
-    return data ? data.id : null;
+    return socio ? socio.id : null;
   };
-
-  const socio = getSocioData();
   const estaVencido = socio?.estado_pago === 'MOROSO'
     || (socio?.vencimientoCuota ? new Date(socio.vencimientoCuota) < new Date() : true);
 
   useEffect(() => {
     const initConfig = async () => {
       try {
+        // Mata-Caché silencioso
+        if (socio?.id) {
+          clienteAxios.get('/socio/perfil').then(resSocio => {
+            if (resSocio.data.success) {
+              setSocio(resSocio.data.data);
+              localStorage.setItem('socio_data', JSON.stringify(resSocio.data.data));
+            }
+          }).catch(err => console.error('Error al actualizar caché del socio:', err));
+        }
+
         const res = await clienteAxios.get('/configuracion');
         const configData = res.data.data || {};
         const stringDias = configData.diasApertura || '1,2,3,4,5,6';
@@ -132,7 +147,8 @@ export default function TurnosSocio() {
       
       const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}`);
       if (res.data.success) {
-        setClases(res.data.data);
+        const clasesFiltradas = res.data.data.filter(c => c.categoriaId === socio?.categoriaId);
+        setClases(clasesFiltradas);
       }
     } catch (err) {
       console.error('Error al cargar clases', err);
@@ -146,7 +162,7 @@ export default function TurnosSocio() {
     if (fechaSeleccionada && semana.length > 0) {
       fetchClases();
     }
-  }, [fechaSeleccionada, semana]);
+  }, [fechaSeleccionada, semana, socio?.categoriaId]);
 
   const handleReservar = async (horario) => {
     if (estaVencido) return;
@@ -252,7 +268,7 @@ export default function TurnosSocio() {
           <div className="col-span-2 bg-white border border-gray-200 rounded-3xl p-10 text-center flex flex-col items-center shadow-sm mt-4">
             <Clock className="w-12 h-12 text-gray-400 mb-3" />
             <h3 className="text-gray-900 font-bold mb-1">Sin actividades</h3>
-            <p className="text-gray-500 text-sm">No hay clases programadas para este día.</p>
+            <p className="text-gray-500 text-sm">No hay clases de tu disciplina programadas para hoy.</p>
           </div>
         ) : (
           clases.map(horario => {
