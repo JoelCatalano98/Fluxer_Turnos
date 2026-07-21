@@ -44,12 +44,16 @@ export default function TurnosSocio() {
   const estaVencido = socio?.estado_pago === 'MOROSO'
     || (socio?.vencimientoCuota ? new Date(socio.vencimientoCuota) < new Date() : true);
 
+  const getAuthHeaders = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem('socio_token')}` }
+  });
+
   useEffect(() => {
     const initConfig = async () => {
       try {
         // Mata-Caché silencioso
         if (socio?.id) {
-          clienteAxios.get('/socio/perfil').then(resSocio => {
+          clienteAxios.get(`/socio/perfil/${socio.id}`, getAuthHeaders()).then(resSocio => {
             if (resSocio.data.success) {
               setSocio(resSocio.data.data);
               localStorage.setItem('socio_data', JSON.stringify(resSocio.data.data));
@@ -57,7 +61,7 @@ export default function TurnosSocio() {
           }).catch(err => console.error('Error al actualizar caché del socio:', err));
         }
 
-        const res = await clienteAxios.get('/configuracion');
+        const res = await clienteAxios.get('/configuracion', getAuthHeaders());
         const configData = res.data.data || {};
         const stringDias = configData.diasApertura || '1,2,3,4,5,6';
         const validos = stringDias.split(',').map(Number);
@@ -145,10 +149,22 @@ export default function TurnosSocio() {
         return; 
       }
       
-      const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}`);
+      const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}`, getAuthHeaders());
       if (res.data.success) {
-        const clasesFiltradas = res.data.data.filter(c => c.categoriaId === socio?.categoriaId);
-        setClases(clasesFiltradas);
+        console.log("🛠️ DEBUG SOCIO:", socio);
+        console.log("🛠️ DEBUG CLASES CRUDAS:", res.data.data);
+
+        const socioCatId = socio?.plan?.categoriaId || socio?.categoriaId;
+        console.log("🛠️ DEBUG SOCIO CATEGORIA_ID:", socioCatId);
+
+        if (!socioCatId) {
+          console.warn("⚠️ El socio no tiene categoriaId asignada. Mostrando todo por fallback.");
+          setClases(res.data.data);
+        } else {
+          const catSocio = Number(socioCatId);
+          const clasesFiltradas = res.data.data.filter(c => Number(c.categoriaId) === catSocio);
+          setClases(clasesFiltradas);
+        }
       }
     } catch (err) {
       console.error('Error al cargar clases', err);
@@ -162,7 +178,7 @@ export default function TurnosSocio() {
     if (fechaSeleccionada && semana.length > 0) {
       fetchClases();
     }
-  }, [fechaSeleccionada, semana, socio?.categoriaId]);
+  }, [fechaSeleccionada, semana, socio?.categoriaId, socio?.plan?.categoriaId]);
 
   const handleReservar = async (horario) => {
     if (estaVencido) return;
@@ -180,7 +196,7 @@ export default function TurnosSocio() {
         horarioId: horario.id,
         clienteId: clienteId,
         fechaExacta: diaObj.fechaStr
-      });
+      }, getAuthHeaders());
 
       if (res.data.success) {
         setAlertMsg({ type: 'success', text: '¡Turno reservado con éxito!' });
@@ -198,7 +214,7 @@ export default function TurnosSocio() {
   const handleCancelar = async (turnoId, horarioId) => {
     setReserving(horarioId);
     try {
-      const res = await clienteAxios.delete(`/socio/turnos/cancelar/${turnoId}`);
+      const res = await clienteAxios.delete(`/socio/turnos/cancelar/${turnoId}`, getAuthHeaders());
       if (res.data.success) {
         setAlertMsg({ type: 'success', text: 'Reserva cancelada con éxito' });
         fetchClases();
