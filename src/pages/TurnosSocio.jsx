@@ -154,7 +154,7 @@ export default function TurnosSocio() {
         console.log("🛠️ DEBUG SOCIO:", socio);
         console.log("🛠️ DEBUG CLASES CRUDAS:", res.data.data);
 
-        const socioCatId = socio?.plan?.categoriaId || socio?.categoriaId;
+        const socioCatId = socio?.categoriaId || socio?.categoria?.id;
         console.log("🛠️ DEBUG SOCIO CATEGORIA_ID:", socioCatId);
 
         if (!socioCatId) {
@@ -178,7 +178,7 @@ export default function TurnosSocio() {
     if (fechaSeleccionada && semana.length > 0) {
       fetchClases();
     }
-  }, [fechaSeleccionada, semana, socio?.categoriaId, socio?.plan?.categoriaId]);
+  }, [fechaSeleccionada, semana, socio?.categoriaId, socio?.categoria?.id]);
 
   const handleReservar = async (horario) => {
     if (estaVencido) return;
