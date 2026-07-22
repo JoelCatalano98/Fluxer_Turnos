@@ -246,7 +246,16 @@ export default function TurnosSocio() {
 
       {/* Header & Calendario Carrusel */}
       <div className="bg-white border-b border-gray-200 px-4 pt-6 pb-4 sticky top-0 z-30 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 tracking-wide">Clases Disponibles</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900 tracking-wide">Clases Disponibles</h2>
+          {socio && socio.saldo !== undefined && socio.saldo !== 0 && (
+            <div className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
+              socio.saldo > 0 ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'
+            }`}>
+              {socio.saldo > 0 ? '💰 A favor:' : '⚠️ Deuda:'} ${Math.abs(socio.saldo).toFixed(2)}
+            </div>
+          )}
+        </div>
         
         <div className="flex justify-between items-center overflow-x-auto pb-2 scrollbar-hide gap-2">
           {semana.map(dia => {
