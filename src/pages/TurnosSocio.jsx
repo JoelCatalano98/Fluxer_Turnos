@@ -149,7 +149,7 @@ export default function TurnosSocio() {
         return; 
       }
       
-      const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}`, getAuthHeaders());
+      const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}&fecha=${diaActivo.fechaStr}`, getAuthHeaders());
       if (res.data.success) {
         console.log("🛠️ DEBUG SOCIO:", socio);
         console.log("🛠️ DEBUG CLASES CRUDAS:", res.data.data);
