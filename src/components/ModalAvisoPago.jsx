@@ -11,6 +11,16 @@ export default function ModalAvisoPago({ isOpen, onClose, clienteId }) {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
+  const getSocioData = () => {
+    try {
+      const data = localStorage.getItem('socio_data');
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  };
+  const socio = getSocioData();
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -56,6 +66,18 @@ export default function ModalAvisoPago({ isOpen, onClose, clienteId }) {
           <div className={`mb-4 p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${feedback.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {feedback.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
             {feedback.text}
+          </div>
+        )}
+
+        {/* Badge de Estado de Cuenta / Saldo */}
+        {socio && socio.saldo > 0 && (
+          <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-xl mb-4 text-sm font-bold flex items-center gap-2">
+            <span>💰 Tenés un saldo a favor de: + ${Math.abs(socio.saldo).toFixed(2)}</span>
+          </div>
+        )}
+        {socio && socio.saldo < 0 && (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl mb-4 text-sm font-bold flex items-center gap-2">
+            <span>⚠️ Saldo pendiente anterior: - ${Math.abs(socio.saldo).toFixed(2)}</span>
           </div>
         )}
 
