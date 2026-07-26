@@ -151,11 +151,7 @@ export default function TurnosSocio() {
       
       const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}&fecha=${diaActivo.fechaStr}`, getAuthHeaders());
       if (res.data.success) {
-        console.log("🛠️ DEBUG SOCIO:", socio);
-        console.log("🛠️ DEBUG CLASES CRUDAS:", res.data.data);
-
         const socioCatId = socio?.categoriaId || socio?.categoria?.id;
-        console.log("🛠️ DEBUG SOCIO CATEGORIA_ID:", socioCatId);
 
         if (!socioCatId) {
           console.warn("⚠️ El socio no tiene categoriaId asignada. Mostrando todo por fallback.");
