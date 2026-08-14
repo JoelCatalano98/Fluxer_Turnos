@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import clienteAxios from '../api/axios';
 import { Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
 
@@ -10,16 +10,19 @@ export default function ModalAvisoPago({ isOpen, onClose, clienteId }) {
   });
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [socio, setSocio] = useState(null);
 
-  const getSocioData = () => {
-    try {
-      const data = localStorage.getItem('socio_data');
-      return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
+  useEffect(() => {
+    if (isOpen && clienteId) {
+      clienteAxios.get(`/socio/perfil/${clienteId}`)
+        .then(res => {
+          if (res.data?.success) {
+            setSocio(res.data.data);
+          }
+        })
+        .catch(err => console.error("Error obteniendo perfil del socio:", err));
     }
-  };
-  const socio = getSocioData();
+  }, [isOpen, clienteId]);
 
   if (!isOpen) return null;
 
