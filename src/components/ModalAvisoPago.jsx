@@ -74,8 +74,12 @@ export default function ModalAvisoPago({ isOpen, onClose, clienteId }) {
 
         {/* Badge de Estado de Cuenta / Saldo */}
         {socio && socio.saldo > 0 && (
-          <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-xl mb-4 text-sm font-bold flex items-center gap-2">
-            <span>💰 Tenés un saldo a favor de: + ${Math.abs(socio.saldo).toFixed(2)}</span>
+          <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-xl mb-4 text-sm font-bold flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span>💰</span>
+              <span>Ya tenés un saldo a favor de <strong>${Math.abs(socio.saldo).toFixed(2)}</strong></span>
+            </div>
+            <span className="text-green-600 text-xs font-medium ml-6">— puede que no necesites transferir nada este mes.</span>
           </div>
         )}
         {socio && socio.saldo < 0 && (
