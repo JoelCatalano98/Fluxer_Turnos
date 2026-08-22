@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import clienteAxios from '../api/axios';
-import { Save, Check, Loader2, Dumbbell, Calculator } from 'lucide-react';
+import { Save, Check, Loader2, Dumbbell, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import CalculadoraPesos from '../components/CalculadoraPesos';
 
 export default function RutinasSocio() {
@@ -9,9 +9,18 @@ export default function RutinasSocio() {
   const [savingId, setSavingId] = useState(null);
   const [successId, setSuccessId] = useState(null);
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
+  const [expandedDays, setExpandedDays] = useState({});
 
   // Estado local para los inputs de peso real
   const [pesosInput, setPesosInput] = useState({});
+
+  const toggleDay = (rutinaId, diaNombre) => {
+    const key = `${rutinaId}-${diaNombre}`;
+    setExpandedDays(prev => ({
+      ...prev,
+      [key]: !prev[key] // Si no existe (undefined) será false (colapsado por defecto) o podemos hacer prev[key] === false
+    }));
+  };
 
   useEffect(() => {
     fetchRutinas();
@@ -125,66 +134,99 @@ export default function RutinasSocio() {
                 {rutina.nombre}
               </h2>
 
-              <div className="space-y-3">
-                {rutina.ejercicios.map(ejercicio => (
-                  <div 
-                    key={ejercicio.id} 
-                    className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col"
-                  >
-                    {/* Encabezado del Ejercicio */}
-                    <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">
-                      {ejercicio.nombreEjercicio}
-                    </h3>
-                    
-                    {/* Detalle Fijo */}
-                    <p className="text-sm text-gray-500 font-medium">
-                      {ejercicio.series} Series x {ejercicio.repeticiones} Reps
-                    </p>
+              <div className="space-y-4">
+                {Object.entries(
+                  rutina.ejercicios.reduce((acc, ej) => {
+                    const diaNombre = ej.dia || 'Sin Día';
+                    if (!acc[diaNombre]) acc[diaNombre] = [];
+                    acc[diaNombre].push(ej);
+                    return acc;
+                  }, {})
+                ).map(([diaNombre, ejerciciosDia]) => {
+                  const key = `${rutina.id}-${diaNombre}`;
+                  // Por defecto los expandimos todos, si se quiere colapsados cambiar a: expandedDays[key] === true
+                  const isExpanded = expandedDays[key] !== false; 
 
-                    {/* Sección de Carga (Interactivo) */}
-                    <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 mt-3 flex items-center justify-between">
+                  return (
+                    <div key={diaNombre} className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                      <button
+                        onClick={() => toggleDay(rutina.id, diaNombre)}
+                        className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <h3 className="text-lg font-bold text-gray-900">{diaNombre}</h3>
+                        {isExpanded ? (
+                          <ChevronUp className="w-5 h-5 text-gray-500" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-gray-500" />
+                        )}
+                      </button>
                       
-                      <div className="flex flex-col">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Sugerido</span>
-                        <span className="text-sm font-semibold text-gray-700">
-                          {ejercicio.pesoSugerido ? `${ejercicio.pesoSugerido} kg` : '-'}
-                        </span>
-                      </div>
+                      {isExpanded && (
+                        <div className="p-4 space-y-3 border-t border-gray-100 bg-gray-50/50">
+                          {ejerciciosDia.map(ejercicio => (
+                            <div 
+                              key={ejercicio.id} 
+                              className="bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col"
+                            >
+                              {/* Encabezado del Ejercicio */}
+                              <h4 className="text-lg font-bold text-gray-900 leading-tight mb-1">
+                                {ejercicio.nombreEjercicio}
+                              </h4>
+                              
+                              {/* Detalle Fijo */}
+                              <p className="text-sm text-gray-500 font-medium">
+                                {ejercicio.series} Series x {ejercicio.repeticiones} Reps
+                              </p>
 
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tu Peso (kg)</span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={pesosInput[ejercicio.id] !== undefined ? pesosInput[ejercicio.id] : ''}
-                            onChange={(e) => handleInputChange(ejercicio.id, e.target.value)}
-                            placeholder="Ej: al fallo"
-                            className="w-16 p-1.5 text-center text-sm font-bold text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all shadow-sm"
-                          />
-                          <button
-                            onClick={() => handleActualizarPeso(ejercicio.id)}
-                            disabled={savingId === ejercicio.id || pesosInput[ejercicio.id] === ''}
-                            className={`p-1.5 rounded-md flex items-center justify-center transition-all duration-200 shadow-sm ${
-                              successId === ejercicio.id 
-                                ? 'bg-gray-200 text-gray-900 border border-gray-300' 
-                                : 'bg-gray-900 text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed'
-                            }`}
-                            aria-label="Guardar peso"
-                          >
-                            {savingId === ejercicio.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : successId === ejercicio.id ? (
-                              <Check className="w-4 h-4" />
-                            ) : (
-                              <Save className="w-4 h-4" />
-                            )}
-                          </button>
+                              {/* Sección de Carga (Interactivo) */}
+                              <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 mt-3 flex items-center justify-between">
+                                
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Sugerido</span>
+                                  <span className="text-sm font-semibold text-gray-700">
+                                    {ejercicio.pesoSugerido ? `${ejercicio.pesoSugerido} kg` : '-'}
+                                  </span>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-1">
+                                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tu Peso (kg)</span>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="text"
+                                      value={pesosInput[ejercicio.id] !== undefined ? pesosInput[ejercicio.id] : ''}
+                                      onChange={(e) => handleInputChange(ejercicio.id, e.target.value)}
+                                      placeholder="Ej: al fallo"
+                                      className="w-16 p-1.5 text-center text-sm font-bold text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all shadow-sm"
+                                    />
+                                    <button
+                                      onClick={() => handleActualizarPeso(ejercicio.id)}
+                                      disabled={savingId === ejercicio.id || pesosInput[ejercicio.id] === ''}
+                                      className={`p-1.5 rounded-md flex items-center justify-center transition-all duration-200 shadow-sm ${
+                                        successId === ejercicio.id 
+                                          ? 'bg-gray-200 text-gray-900 border border-gray-300' 
+                                          : 'bg-gray-900 text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed'
+                                      }`}
+                                      aria-label="Guardar peso"
+                                    >
+                                      {savingId === ejercicio.id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : successId === ejercicio.id ? (
+                                        <Check className="w-4 h-4" />
+                                      ) : (
+                                        <Save className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

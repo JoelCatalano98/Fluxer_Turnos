@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clienteAxios from '../api/axios';
-import { Mail, Lock, LogIn, UserPlus, Zap, User, CreditCard, ArrowRightLeft } from 'lucide-react';
+import { Mail, Lock, LogIn, UserPlus, Zap, User, CreditCard, ArrowRightLeft, Phone, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function LoginSocio() {
   const navigate = useNavigate();
@@ -15,11 +15,37 @@ export default function LoginSocio() {
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [dniCuit, setDniCuit] = useState('');
+  const [telefono, setTelefono] = useState('');
 
   // Feedback
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isWaitingApproval, setIsWaitingApproval] = useState(false);
+
+  // Silent login en background cuando recupera el foco
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && isWaitingApproval && email && password) {
+        try {
+          const res = await clienteAxios.post(`/socio/auth/login`, { email, password });
+          if (res.data.success) {
+            localStorage.setItem('socio_token', res.data.data.token);
+            const clienteToSave = { ...res.data.data.cliente, defaultPassword: res.data.data.defaultPassword };
+            localStorage.setItem('socio_data', JSON.stringify(clienteToSave));
+            navigate('/app');
+          }
+        } catch (err) {
+          if (err.response?.status !== 403) {
+            setIsWaitingApproval(false);
+            setError(err.response?.data?.message || 'Error de sesión');
+          }
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isWaitingApproval, email, password, navigate]);
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
@@ -39,7 +65,8 @@ export default function LoginSocio() {
         const res = await clienteAxios.post(`/socio/auth/login`, { email, password });
         // Guardar token y datos del usuario en localStorage
         localStorage.setItem('socio_token', res.data.data.token);
-        localStorage.setItem('socio_data', JSON.stringify(res.data.data.cliente));
+        const clienteToSave = { ...res.data.data.cliente, defaultPassword: res.data.data.defaultPassword };
+        localStorage.setItem('socio_data', JSON.stringify(clienteToSave));
         // Navegar a la app
         navigate('/app');
       } else {
@@ -49,21 +76,25 @@ export default function LoginSocio() {
           apellido,
           dni_cuit: dniCuit,
           email,
+          telefono,
           password,
         });
-        // Registro exitoso: cambiar a login
-        setSuccess('¡Cuenta creada con éxito! Ahora iniciá sesión.');
+        // Registro exitoso: cambiar a login pero no borrar email/password para el polling
+        setSuccess('¡Cuenta enviada a revisión! Iniciá sesión para verificar su estado.');
         setIsLogin(true);
-        // Limpiar campos de registro
+        // Limpiar otros campos de registro
         setNombre('');
         setApellido('');
         setDniCuit('');
-        setPassword('');
+        setTelefono('');
       }
     } catch (err) {
-      const msg =
-        err.response?.data?.message || 'Ocurrió un error. Intentá de nuevo.';
-      setError(msg);
+      if (isLogin && err.response?.status === 403) {
+        setIsWaitingApproval(true);
+      } else {
+        const msg = err.response?.data?.message || 'Ocurrió un error. Intentá de nuevo.';
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -84,11 +115,31 @@ export default function LoginSocio() {
         </div>
 
         {/* Card */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm"
-        >
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        {isWaitingApproval ? (
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm text-center animate-in fade-in zoom-in duration-300">
+             <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-5">
+                <AlertCircle className="w-8 h-8" />
+             </div>
+             <h2 className="text-xl font-bold text-gray-900 mb-3">Cuenta en Revisión</h2>
+             <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                Hemos recibido tu solicitud. El administrador está verificando tus datos y te habilitará el acceso pronto.
+             </p>
+             <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3 text-left">
+                <Loader2 className="w-5 h-5 text-blue-500 animate-spin mt-0.5 shrink-0" />
+                <p className="text-sm text-blue-800 leading-tight">
+                   Esta pantalla se actualizará automáticamente cuando tu cuenta sea aprobada.
+                </p>
+             </div>
+             <button onClick={() => { setIsWaitingApproval(false); setError(''); }} className="mt-6 text-sm font-medium text-gray-400 hover:text-gray-800 transition-colors">
+                Volver al inicio de sesión
+             </button>
+          </div>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm"
+          >
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
             {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
           </h2>
 
@@ -155,6 +206,24 @@ export default function LoginSocio() {
                     value={dniCuit}
                     onChange={(e) => setDniCuit(e.target.value)}
                     placeholder="Ej: 12345678"
+                    required
+                    className="w-full pl-11 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Teléfono */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">
+                  Teléfono
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="tel"
+                    value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
+                    placeholder="+54 9 11 2345 6789"
                     required
                     className="w-full pl-11 p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all"
                   />
@@ -236,6 +305,7 @@ export default function LoginSocio() {
             © {new Date().getFullYear()} Fluxer · Todos los derechos reservados
           </p>
         </form>
+        )}
       </div>
     </div>
   );
