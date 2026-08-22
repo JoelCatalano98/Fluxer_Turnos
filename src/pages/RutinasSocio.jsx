@@ -46,11 +46,16 @@ export default function RutinasSocio() {
     try {
       const res = await clienteAxios.get(`/socio/rutinas/${clienteId}`);
       if (res.data.success) {
-        setRutinas(res.data.data);
+        const rutinasOrdenadas = [...res.data.data].sort((a, b) => {
+          if (a.clienteId === null && b.clienteId !== null) return -1;
+          if (a.clienteId !== null && b.clienteId === null) return 1;
+          return 0;
+        });
+        setRutinas(rutinasOrdenadas);
         
         // Inicializar el estado de los inputs con los pesos reales que ya vienen de la DB
         const initialPesos = {};
-        res.data.data.forEach(rutina => {
+        rutinasOrdenadas.forEach(rutina => {
           rutina.ejercicios.forEach(ej => {
             if (ej.pesoReal !== null && ej.pesoReal !== undefined) {
               initialPesos[ej.id] = ej.pesoReal;
@@ -130,9 +135,20 @@ export default function RutinasSocio() {
         <div className="p-4 space-y-8">
           {rutinas.map(rutina => (
             <div key={rutina.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h2 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">
-                {rutina.nombre}
-              </h2>
+              <div className="mb-4">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+                  {rutina.nombre}
+                </h2>
+                {rutina.clienteId === null ? (
+                  <span className="inline-block mt-1 text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md">
+                    Esta es la rutina general del gimnasio
+                  </span>
+                ) : (
+                  <span className="inline-block mt-1 text-xs font-semibold px-2.5 py-1 bg-purple-100 text-purple-800 rounded-md">
+                    Tu Rutina Personalizada
+                  </span>
+                )}
+              </div>
 
               <div className="space-y-4">
                 {Object.entries(
