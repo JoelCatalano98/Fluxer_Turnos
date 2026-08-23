@@ -11,7 +11,19 @@ export default function AvisosSocio() {
       try {
         const res = await clienteAxios.get('/socio/avisos');
         if (res.data.success) {
-          setAvisos(res.data.data);
+          const avisosData = res.data.data;
+          setAvisos(avisosData);
+
+          // Marcar como leídos al entrar a la página
+          if (avisosData.length > 0) {
+            const currentIds = avisosData.map(a => a.id);
+            const dismissed = JSON.parse(localStorage.getItem('dismissed_avisos') || '[]');
+            const newDismissed = Array.from(new Set([...dismissed, ...currentIds]));
+            localStorage.setItem('dismissed_avisos', JSON.stringify(newDismissed));
+            
+            // Disparar un evento para que LayoutSocio se entere si queremos (opcional), 
+            // o simplemente en la próxima recarga no aparecerá.
+          }
         }
       } catch (error) {
         console.error('Error al cargar avisos:', error);

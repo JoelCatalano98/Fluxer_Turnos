@@ -50,6 +50,10 @@ export default function LayoutSocio() {
   const [error, setError] = useState('');
   const [socioDataState, setSocioDataState] = useState(null);
 
+  // --- AVISOS SIN LEER ---
+  const [unreadAvisos, setUnreadAvisos] = useState(false);
+  const [avisosIds, setAvisosIds] = useState([]);
+
   useEffect(() => {
     try {
       const socioData = JSON.parse(localStorage.getItem('socio_data') || '{}');
@@ -63,6 +67,33 @@ export default function LayoutSocio() {
       console.error('Error leyendo socio_data', err);
     }
   }, []);
+
+  useEffect(() => {
+    if (socioDataState && socioDataState.id) {
+      const fetchUnreadAvisos = async () => {
+        try {
+          const res = await clienteAxios.get('/socio/avisos');
+          if (res.data.success && res.data.data.length > 0) {
+            const currentIds = res.data.data.map(a => a.id);
+            setAvisosIds(currentIds);
+            const dismissed = JSON.parse(localStorage.getItem('dismissed_avisos') || '[]');
+            const hasUnread = currentIds.some(id => !dismissed.includes(id));
+            setUnreadAvisos(hasUnread);
+          }
+        } catch (e) {
+          console.error("Error al cargar avisos para notificación", e);
+        }
+      };
+      fetchUnreadAvisos();
+    }
+  }, [socioDataState]);
+
+  const handleDismissAvisos = () => {
+    const dismissed = JSON.parse(localStorage.getItem('dismissed_avisos') || '[]');
+    const newDismissed = Array.from(new Set([...dismissed, ...avisosIds]));
+    localStorage.setItem('dismissed_avisos', JSON.stringify(newDismissed));
+    setUnreadAvisos(false);
+  };
 
   const handleSaveTelefono = async (e) => {
     e.preventDefault();
@@ -180,6 +211,36 @@ export default function LayoutSocio() {
                 const updated = { ...socioDataState, defaultPassword: false };
                 localStorage.setItem('socio_data', JSON.stringify(updated));
                 setSocioDataState(updated);
+              }} 
+              className="p-1 hover:bg-gray-100 rounded-lg shrink-0 transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Aviso de Novedades Sin Leer ── */}
+      {unreadAvisos && !requireTelefono && (
+        <div className="fixed bottom-36 left-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-500">
+          <div 
+            className="bg-white/95 backdrop-blur-md border border-blue-200 p-4 rounded-2xl shadow-xl flex items-start gap-4 cursor-pointer"
+            onClick={() => {
+              navigate('/app/avisos');
+              handleDismissAvisos();
+            }}
+          >
+            <div className="p-2 bg-blue-100 rounded-full shrink-0">
+              <Megaphone className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-gray-900">¡Tenés avisos sin leer!</h4>
+              <p className="text-xs text-gray-600 mt-1">Toca aquí para ver las últimas novedades del gimnasio.</p>
+            </div>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDismissAvisos();
               }} 
               className="p-1 hover:bg-gray-100 rounded-lg shrink-0 transition-colors"
             >
