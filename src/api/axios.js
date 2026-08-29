@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+if (!import.meta.env.VITE_API_URL) {
+  console.error("VITE_API_URL no está configurada — la app no puede conectarse al backend");
+}
+
 const clienteAxios = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    baseURL: import.meta.env.VITE_API_URL,
 });
 
 // Interceptor: adjuntar token JWT en cada petición
