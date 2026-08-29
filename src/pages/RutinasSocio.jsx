@@ -11,8 +11,9 @@ export default function RutinasSocio() {
   const [mostrarCalculadora, setMostrarCalculadora] = useState(false);
   const [expandedDays, setExpandedDays] = useState({});
 
-  // Estado local para los inputs de peso real
+  // Estado local para los inputs de peso real y notas
   const [pesosInput, setPesosInput] = useState({});
+  const [notasInput, setNotasInput] = useState({});
 
   const toggleDay = (rutinaId, diaNombre) => {
     const key = `${rutinaId}-${diaNombre}`;
@@ -53,8 +54,9 @@ export default function RutinasSocio() {
         });
         setRutinas(rutinasOrdenadas);
         
-        // Inicializar el estado de los inputs con los pesos reales que ya vienen de la DB
+        // Inicializar el estado de los inputs con los pesos reales y notas que ya vienen de la DB
         const initialPesos = {};
+        const initialNotas = {};
         rutinasOrdenadas.forEach(rutina => {
           rutina.ejercicios.forEach(ej => {
             if (ej.pesoReal !== null && ej.pesoReal !== undefined) {
@@ -62,9 +64,15 @@ export default function RutinasSocio() {
             } else {
               initialPesos[ej.id] = '';
             }
+            if (ej.notas !== null && ej.notas !== undefined) {
+              initialNotas[ej.id] = ej.notas;
+            } else {
+              initialNotas[ej.id] = '';
+            }
           });
         });
         setPesosInput(initialPesos);
+        setNotasInput(initialNotas);
       }
     } catch (error) {
       console.error('Error al cargar rutinas:', error);
@@ -74,15 +82,17 @@ export default function RutinasSocio() {
   };
 
   const handleActualizarPeso = async (ejercicioId) => {
-    const peso = pesosInput[ejercicioId];
-    if (peso === '' || peso === null || peso === undefined) return;
+    const peso = pesosInput[ejercicioId] || '';
+    const notas = notasInput[ejercicioId] || '';
+    if (peso === '' && notas === '') return;
 
     setSavingId(ejercicioId);
     setSuccessId(null);
 
     try {
       const res = await clienteAxios.put(`/socio/rutinas/ejercicio/${ejercicioId}`, {
-        pesoReal: String(peso)
+        pesoReal: String(peso),
+        notas: notas ? String(notas) : ''
       });
 
       if (res.data.success) {
@@ -90,7 +100,7 @@ export default function RutinasSocio() {
         setRutinas(prev => prev.map(rut => ({
           ...rut,
           ejercicios: rut.ejercicios.map(ej => 
-            ej.id === ejercicioId ? { ...ej, pesoReal: String(peso) } : ej
+            ej.id === ejercicioId ? { ...ej, pesoReal: String(peso), notas: notas ? String(notas) : '' } : ej
           )
         })));
         
@@ -108,6 +118,10 @@ export default function RutinasSocio() {
 
   const handleInputChange = (ejercicioId, value) => {
     setPesosInput(prev => ({ ...prev, [ejercicioId]: value }));
+  };
+
+  const handleNotasChange = (ejercicioId, value) => {
+    setNotasInput(prev => ({ ...prev, [ejercicioId]: value }));
   };
 
   if (loading) {
@@ -207,35 +221,56 @@ export default function RutinasSocio() {
                                 <div className="flex flex-col items-end gap-1">
                                   <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Tu Peso (kg)</span>
                                   <div className="flex items-center gap-2">
-                                    <input
-                                      type="text"
-                                      value={pesosInput[ejercicio.id] !== undefined ? pesosInput[ejercicio.id] : ''}
-                                      onChange={(e) => handleInputChange(ejercicio.id, e.target.value)}
-                                      placeholder="Ej: al fallo"
-                                      className="w-16 p-1.5 text-center text-sm font-bold text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all shadow-sm"
-                                    />
-                                    <button
-                                      onClick={() => handleActualizarPeso(ejercicio.id)}
-                                      disabled={savingId === ejercicio.id || pesosInput[ejercicio.id] === ''}
-                                      className={`p-1.5 rounded-md flex items-center justify-center transition-all duration-200 shadow-sm ${
-                                        successId === ejercicio.id 
-                                          ? 'bg-gray-200 text-gray-900 border border-gray-300' 
-                                          : 'bg-gray-900 text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed'
-                                      }`}
-                                      aria-label="Guardar peso"
-                                    >
-                                      {savingId === ejercicio.id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : successId === ejercicio.id ? (
-                                        <Check className="w-4 h-4" />
-                                      ) : (
-                                        <Save className="w-4 h-4" />
-                                      )}
-                                    </button>
+                                    {rutina.clienteId !== null ? (
+                                      <>
+                                        <input
+                                          type="text"
+                                          value={pesosInput[ejercicio.id] !== undefined ? pesosInput[ejercicio.id] : ''}
+                                          onChange={(e) => handleInputChange(ejercicio.id, e.target.value)}
+                                          placeholder="Ej: al fallo"
+                                          className="w-16 p-1.5 text-center text-sm font-bold text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all shadow-sm"
+                                        />
+                                        <button
+                                          onClick={() => handleActualizarPeso(ejercicio.id)}
+                                          disabled={savingId === ejercicio.id || ((!pesosInput[ejercicio.id] || pesosInput[ejercicio.id] === '') && (!notasInput[ejercicio.id] || notasInput[ejercicio.id] === ''))}
+                                          className={`p-1.5 rounded-md flex items-center justify-center transition-all duration-200 shadow-sm ${
+                                            successId === ejercicio.id 
+                                              ? 'bg-gray-200 text-gray-900 border border-gray-300' 
+                                              : 'bg-gray-900 text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed'
+                                          }`}
+                                          aria-label="Guardar peso y notas"
+                                        >
+                                          {savingId === ejercicio.id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : successId === ejercicio.id ? (
+                                            <Check className="w-4 h-4" />
+                                          ) : (
+                                            <Save className="w-4 h-4" />
+                                          )}
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span className="text-sm font-semibold text-gray-700">
+                                        Solo lectura
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
 
                               </div>
+                              
+                              {/* Sección de Notas */}
+                              {rutina.clienteId !== null && (
+                                <div className="mt-2">
+                                  <textarea
+                                    value={notasInput[ejercicio.id] !== undefined ? notasInput[ejercicio.id] : ''}
+                                    onChange={(e) => handleNotasChange(ejercicio.id, e.target.value)}
+                                    placeholder="Notas del ejercicio (opcional)..."
+                                    className="w-full p-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 transition-all resize-none shadow-sm"
+                                    rows="2"
+                                  />
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
