@@ -7,10 +7,12 @@ import RutinasSocio from './pages/RutinasSocio';
 import AvisosSocio from './pages/AvisosSocio';
 import RankingSocio from './pages/RankingSocio';
 import SuscripcionSocio from './pages/SuscripcionSocio';
+import InstallPrompt from './components/InstallPrompt';
 
 export default function App() {
   return (
     <BrowserRouter>
+      <InstallPrompt />
       <Routes>
         {/* Login */}
         <Route path="/" element={<LoginSocio />} />
