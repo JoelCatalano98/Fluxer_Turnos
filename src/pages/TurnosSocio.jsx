@@ -41,8 +41,10 @@ export default function TurnosSocio() {
   const getSocioId = () => {
     return socio ? socio.id : null;
   };
+  const estaInactivo = socio?.estado_cliente === 'INACTIVO';
   const estaVencido = socio?.estado_pago === 'MOROSO'
-    || (socio?.vencimientoCuota ? new Date(socio.vencimientoCuota) < new Date() : true);
+    || (socio?.vencimientoCuota ? new Date(socio.vencimientoCuota) < new Date() : true)
+    || estaInactivo;
 
   const getAuthHeaders = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('socio_token')}` }
