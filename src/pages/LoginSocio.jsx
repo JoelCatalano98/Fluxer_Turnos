@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clienteAxios from '../api/axios';
-import { Mail, Lock, LogIn, UserPlus, Zap, User, CreditCard, ArrowRightLeft, Phone, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, LogIn, UserPlus, Zap, User, CreditCard, ArrowRightLeft, Phone, AlertCircle, Loader2, MapPin } from 'lucide-react';
 
 export default function LoginSocio() {
   const navigate = useNavigate();
@@ -16,6 +16,32 @@ export default function LoginSocio() {
   const [apellido, setApellido] = useState('');
   const [dniCuit, setDniCuit] = useState('');
   const [telefono, setTelefono] = useState('');
+
+  // Multi-sucursal
+  const [branches, setBranches] = useState([]);
+  const [multiSucursalHabilitado, setMultiSucursalHabilitado] = useState(false);
+  const [branchId, setBranchId] = useState('');
+
+  // Fetch branches públicas
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const res = await clienteAxios.get('/branches/public');
+        if (res.data.success && res.data.habilitado) {
+          setMultiSucursalHabilitado(true);
+          setBranches(res.data.branches);
+          if (res.data.branches.length > 0) {
+            setBranchId(res.data.branches[0].id || '');
+          }
+        } else {
+          setMultiSucursalHabilitado(false);
+        }
+      } catch (err) {
+        console.error('Error al cargar sucursales:', err);
+      }
+    };
+    fetchBranches();
+  }, []);
 
   // Feedback
   const [error, setError] = useState('');
@@ -78,6 +104,7 @@ export default function LoginSocio() {
           email,
           telefono,
           password,
+          branchId: multiSucursalHabilitado ? branchId : null
         });
         // Registro exitoso: cambiar a login pero no borrar email/password para el polling
         setSuccess('¡Cuenta enviada a revisión! Iniciá sesión para verificar su estado.');
@@ -158,6 +185,28 @@ export default function LoginSocio() {
           {/* ── Campos de Registro ── */}
           {!isLogin && (
             <>
+              {/* Sede (si multi-sucursal está habilitado) */}
+              {multiSucursalHabilitado && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-amber-700 mb-1.5 font-bold">
+                    Sede (Obligatorio)
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-600" />
+                    <select
+                      value={branchId}
+                      onChange={(e) => setBranchId(e.target.value)}
+                      required
+                      className="w-full pl-11 p-3 bg-amber-50 border-2 border-amber-300 rounded-xl text-amber-900 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all appearance-none shadow-sm"
+                    >
+                      {branches.map(b => (
+                        <option key={b.id || 'central'} value={b.id || ''}>{b.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               {/* Nombre */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-600 mb-1.5">
