@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import clienteAxios from '../api/axios';
-import { Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react';
 
 // Formatear hora (UTC a HH:MM)
 const formatTime = (dateStr) => {
@@ -16,6 +16,23 @@ export default function TurnosSocio() {
   const [loading, setLoading] = useState(true);
   const [reserving, setReserving] = useState(null);
   const [alertMsg, setAlertMsg] = useState(null);
+  const alertTimeoutRef = useRef(null);
+
+  const mostrarAlerta = (text, type = 'error', duracion = 6500) => {
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current);
+    }
+    setAlertMsg({ type, text });
+    alertTimeoutRef.current = setTimeout(() => {
+      setAlertMsg(null);
+    }, duracion);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+    };
+  }, []);
   const [modalAnotados, setModalAnotados] = useState({ isOpen: false, turnos: [], titulo: '' });
   
   const [semana, setSemana] = useState([]);
@@ -154,20 +171,26 @@ export default function TurnosSocio() {
       
       const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}&fecha=${diaActivo.fechaStr}`, getAuthHeaders());
       if (res.data.success) {
-        const socioCatId = socio?.categoriaId || socio?.categoria?.id;
+        let idsCategorias = [];
+        if (Array.isArray(socio?.categorias) && socio.categorias.length > 0) {
+          idsCategorias = socio.categorias.map(c => Number(c.id || c)).filter(id => !isNaN(id) && id > 0);
+        } else if (socio?.categoriaId || socio?.categoria?.id) {
+          const id = Number(socio.categoriaId || socio.categoria.id);
+          if (!isNaN(id) && id > 0) idsCategorias = [id];
+        }
 
-        if (!socioCatId) {
-          console.warn("⚠️ El socio no tiene categoriaId asignada. Mostrando todo por fallback.");
+        if (idsCategorias.length === 0) {
+          console.warn("⚠️ El socio no tiene categorías asignadas. Mostrando todo por fallback.");
           setClases(res.data.data);
         } else {
-          const catSocio = Number(socioCatId);
-          const clasesFiltradas = res.data.data.filter(c => Number(c.categoriaId) === catSocio);
+          const clasesFiltradas = res.data.data.filter(c => idsCategorias.includes(Number(c.categoriaId)));
           setClases(clasesFiltradas);
         }
       }
     } catch (err) {
       console.error('Error al cargar clases', err);
-      setAlertMsg({ type: 'error', text: 'Error de conexión al cargar la grilla.' });
+      const msg = err.response?.data?.message || 'Error de conexión al cargar la grilla.';
+      mostrarAlerta(msg, 'error', 5000);
     } finally {
       setLoading(false);
     }
@@ -177,19 +200,26 @@ export default function TurnosSocio() {
     if (fechaSeleccionada && semana.length > 0) {
       fetchClases();
     }
-  }, [fechaSeleccionada, semana, socio?.categoriaId, socio?.categoria?.id]);
+  }, [fechaSeleccionada, semana, socio?.categoriaId, socio?.categoria?.id, JSON.stringify(socio?.categorias)]);
 
   const handleReservar = async (horario) => {
-    if (estaVencido) return;
+    if (estaVencido) {
+      mostrarAlerta('Tenés cuotas pendientes o tu cuenta está inactiva. Regularizá tu pago para reservar.', 'error', 6500);
+      return;
+    }
     const clienteId = getSocioId();
     if (!clienteId) {
-      setAlertMsg({ type: 'error', text: 'Sesión inválida, vuelve a iniciar sesión.' });
+      mostrarAlerta('Sesión inválida, vuelve a iniciar sesión.', 'error', 6500);
       return;
     }
 
     setReserving(horario.id);
     try {
       const diaObj = semana.find(d => d.fechaStr === fechaSeleccionada);
+      if (!diaObj) {
+        mostrarAlerta('Día seleccionado no válido.', 'error', 6500);
+        return;
+      }
       
       const res = await clienteAxios.post(`/socio/turnos/reservar`, {
         horarioId: horario.id,
@@ -198,15 +228,15 @@ export default function TurnosSocio() {
       }, getAuthHeaders());
 
       if (res.data.success) {
-        setAlertMsg({ type: 'success', text: '¡Turno reservado con éxito!' });
+        mostrarAlerta('¡Turno reservado con éxito!', 'success', 3500);
         fetchClases(); 
       }
     } catch (error) {
-      const msg = error.response?.data?.message || 'Error al reservar el turno.';
-      setAlertMsg({ type: 'error', text: msg });
+      console.error('Error al reservar turno:', error);
+      const msg = error.response?.data?.message || error.message || 'Error al reservar el turno.';
+      mostrarAlerta(msg, 'error', 7000);
     } finally {
       setReserving(null);
-      setTimeout(() => setAlertMsg(null), 3000);
     }
   };
 
@@ -215,15 +245,15 @@ export default function TurnosSocio() {
     try {
       const res = await clienteAxios.delete(`/socio/turnos/cancelar/${turnoId}`, getAuthHeaders());
       if (res.data.success) {
-        setAlertMsg({ type: 'success', text: 'Reserva cancelada con éxito' });
+        mostrarAlerta('Reserva cancelada con éxito', 'success', 3500);
         fetchClases();
       }
     } catch (error) {
-      const msg = error.response?.data?.message || 'Error al cancelar el turno.';
-      setAlertMsg({ type: 'error', text: msg });
+      console.error('Error al cancelar turno:', error);
+      const msg = error.response?.data?.message || error.message || 'Error al cancelar el turno.';
+      mostrarAlerta(msg, 'error', 7000);
     } finally {
       setReserving(null);
-      setTimeout(() => setAlertMsg(null), 3000);
     }
   };
 
@@ -233,16 +263,6 @@ export default function TurnosSocio() {
   return (
     <div className="max-w-md mx-auto relative pb-20 min-h-screen bg-gray-50">
       
-      {/* Alerta flotante */}
-      {alertMsg && (
-        <div className={`fixed bottom-10 left-4 right-4 z-[10000] p-4 rounded-xl shadow-2xl text-center font-bold ${
-          alertMsg.type === 'success' ? 'bg-gray-900 text-white' : 'bg-red-600 text-white'
-        } flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-5`}>
-          {alertMsg.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-          <span>{alertMsg.text}</span>
-        </div>
-      )}
-
       {/* Header & Calendario Carrusel */}
       <div className="bg-white border-b border-gray-200 px-4 pt-6 pb-4 sticky top-0 z-30 shadow-sm">
         <div className="flex justify-between items-center mb-4">
@@ -273,6 +293,44 @@ export default function TurnosSocio() {
           })}
         </div>
       </div>
+
+      {/* Alerta de alta visibilidad (movida debajo del banner) */}
+      {alertMsg && (
+        <div className="px-4 mt-4 animate-in fade-in duration-200">
+          <div className={`p-4 rounded-2xl shadow-md border flex items-start gap-3 ${
+            alertMsg.type === 'success'
+              ? 'bg-gray-900 border-gray-800 text-white'
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="mt-0.5 flex-shrink-0">
+              {alertMsg.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 text-emerald-400" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              )}
+            </div>
+            <div className="flex-1 text-sm font-semibold leading-snug">
+              {alertMsg.text}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current);
+                setAlertMsg(null);
+              }}
+              className={`p-1 -mr-1 -mt-1 rounded-lg transition-colors ${
+                alertMsg.type === 'success' 
+                  ? 'text-white/80 hover:text-white hover:bg-white/10' 
+                  : 'text-red-500 hover:text-red-700 hover:bg-red-100'
+              }`}
+              aria-label="Cerrar aviso"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {/* Lista de Horarios */}
       <div className="grid grid-cols-2 gap-3 p-3">
@@ -343,23 +401,26 @@ export default function TurnosSocio() {
                       )}
                     </button>
                   ) : estaLlena ? (
-                    <button disabled className="w-full py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed">
+                    <button 
+                      type="button"
+                      onClick={() => mostrarAlerta('Esta clase ya completó su cupo máximo de lugares.', 'error', 4500)}
+                      className="w-full py-2 rounded-lg text-sm font-semibold border border-gray-200 text-gray-400 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                    >
                       Lleno
                     </button>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => handleReservar(horario)}
-                      disabled={isReservingThis || bloqueadoPorDeuda}
+                      disabled={isReservingThis}
                       className={`w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-all ${
                         bloqueadoPorDeuda
-                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                          : 'bg-gray-900 text-white hover:bg-black active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100'
-                      }`}
+                          ? 'bg-amber-50 border border-amber-300 text-amber-800 hover:bg-amber-100'
+                          : 'bg-gray-900 text-white hover:bg-black active:scale-[0.98]'
+                      } disabled:opacity-70 disabled:active:scale-100`}
                     >
                       {isReservingThis ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      ) : bloqueadoPorDeuda ? (
-                        'Anotarme'
+                        <Loader2 className={`w-4 h-4 animate-spin ${bloqueadoPorDeuda ? 'text-amber-800' : 'text-white'}`} />
                       ) : (
                         'Anotarme'
                       )}
