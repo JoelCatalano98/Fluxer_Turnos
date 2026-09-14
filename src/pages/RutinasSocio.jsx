@@ -37,6 +37,8 @@ export default function RutinasSocio() {
     }
   };
 
+  const [rutinaLibroAsignada, setRutinaLibroAsignada] = useState(null);
+
   const fetchRutinas = async () => {
     const clienteId = getSocioId();
     if (!clienteId) {
@@ -45,6 +47,17 @@ export default function RutinasSocio() {
     }
 
     try {
+      // 1. Fetch rutina del libro (nueva feature)
+      try {
+        const resLibro = await clienteAxios.get(`/libro-rutinas/cliente/${clienteId}`);
+        if (resLibro.data.success && resLibro.data.data) {
+          setRutinaLibroAsignada(resLibro.data.data.rutinaLibro.nombre);
+        }
+      } catch (err) {
+        console.error('Error al verificar rutina de libro:', err);
+      }
+
+      // 2. Fetch rutinas clásicas
       const res = await clienteAxios.get(`/socio/rutinas/${clienteId}`);
       if (res.data.success) {
         const rutinasOrdenadas = [...res.data.data].sort((a, b) => {
@@ -147,6 +160,25 @@ export default function RutinasSocio() {
         </div>
       ) : (
         <div className="p-4 space-y-8">
+          
+          {/* BANNER DE RUTINA DE LIBRO ASIGNADA */}
+          {rutinaLibroAsignada && (
+            <div className="animate-in fade-in slide-in-from-top-4 duration-500 mb-6">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-5 shadow-lg text-white">
+                <div className="flex items-center gap-3 mb-2">
+                  <Dumbbell className="w-6 h-6 text-blue-200" />
+                  <h2 className="text-sm font-bold tracking-wider text-blue-100 uppercase">
+                    Plan de Entrenamiento Activo
+                  </h2>
+                </div>
+                <h3 className="text-2xl font-black">{rutinaLibroAsignada}</h3>
+                <p className="mt-2 text-sm text-blue-100 opacity-90">
+                  Consulta con tu profesor para conocer los detalles de tus ejercicios y progresión en este plan.
+                </p>
+              </div>
+            </div>
+          )}
+
           {rutinas.map(rutina => (
             <div key={rutina.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-4">
@@ -174,8 +206,8 @@ export default function RutinasSocio() {
                   }, {})
                 ).map(([diaNombre, ejerciciosDia]) => {
                   const key = `${rutina.id}-${diaNombre}`;
-                  // Por defecto los expandimos todos, si se quiere colapsados cambiar a: expandedDays[key] === true
-                  const isExpanded = expandedDays[key] !== false; 
+                  // Por defecto los colapsamos, solo se expanden si explícitamente se hizo click
+                  const isExpanded = !!expandedDays[key];
 
                   return (
                     <div key={diaNombre} className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
