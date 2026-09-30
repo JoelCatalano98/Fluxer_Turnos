@@ -14,6 +14,7 @@ const formatTime = (dateStr) => {
 export default function TurnosSocio() {
   const [clases, setClases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ocultarInscriptos, setOcultarInscriptos] = useState(false);
   const [reserving, setReserving] = useState(null);
   const [alertMsg, setAlertMsg] = useState(null);
   const alertTimeoutRef = useRef(null);
@@ -171,6 +172,7 @@ export default function TurnosSocio() {
       
       const res = await clienteAxios.get(`/socio/turnos/disponibles?dia_semana=${diaActivo.diaSemana}&fecha=${diaActivo.fechaStr}`, getAuthHeaders());
       if (res.data.success) {
+        setOcultarInscriptos(res.data.ocultarInscriptos === true);
         let idsCategorias = [];
         if (Array.isArray(socio?.categorias) && socio.categorias.length > 0) {
           idsCategorias = socio.categorias.map(c => Number(c.id || c)).filter(id => !isNaN(id) && id > 0);
@@ -378,12 +380,14 @@ export default function TurnosSocio() {
                     {ocupados}/{cupoMaximo} lugares
                   </span>
                   
-                  <button 
-                    onClick={() => setModalAnotados({ isOpen: true, turnos: turnosHoy, titulo: catNombre + ' ' + formatTime(horario.hora_inicio) })}
-                    className="text-left text-[11px] text-gray-900 hover:text-black underline underline-offset-2 mt-1 w-max font-semibold"
-                  >
-                    Ver anotados ({ocupados})
-                  </button>
+                  {ocultarInscriptos !== true && (
+                    <button 
+                      onClick={() => setModalAnotados({ isOpen: true, turnos: turnosHoy, titulo: catNombre + ' ' + formatTime(horario.hora_inicio) })}
+                      className="text-left text-[11px] text-gray-900 hover:text-black underline underline-offset-2 mt-1 w-max font-semibold"
+                    >
+                      Ver anotados ({ocupados})
+                    </button>
+                  )}
                 </div>
 
                 {/* Botón de Acción */}
